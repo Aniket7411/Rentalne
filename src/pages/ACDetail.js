@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import {
   MapPin,
@@ -29,7 +29,7 @@ import { defaultBrowsePath } from '../utils/browseUrls';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
-/** Matches `GET /api/acs/:id` / products `price` object keys. */
+/** Matches public product detail `price` object keys (GET /products/:id or legacy /acs/:id). */
 const TENURE_MONTHS = [3, 6, 9, 11, 12, 24];
 
 const BENEFIT_CARDS = [
@@ -102,7 +102,6 @@ function CollapsiblePanel({ title, open, onToggle, children }) {
 const ACDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const { addRentalToCart } = useCart();
 
@@ -299,17 +298,13 @@ const ACDetail = () => {
     if (!ac || ac.status === 'Rented Out') return;
     const pid = ac._id || ac.id;
     if (!pid) return;
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: location.pathname } } });
-      return;
-    }
-    if (user.role !== 'user') {
+    if (user && user.role !== 'user') {
       setCartHint('Please sign in as a customer to add to cart.');
       return;
     }
     setCartBusy(true);
     setCartHint('');
-    const res = await addRentalToCart(pid, cartPaymentOption);
+    const res = await addRentalToCart(pid, cartPaymentOption, ac);
     setCartBusy(false);
     if (res.success) {
       setCartHint('Added to cart');

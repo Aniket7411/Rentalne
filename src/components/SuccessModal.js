@@ -21,8 +21,8 @@ const SuccessModal = ({ isOpen, title = 'Success', message, onClose, confirmText
           </div>
           <div className="px-6 py-6 text-center">
             <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
-            <p className="text-gray-800 font-medium mb-1">Service booking submitted successfully</p>
-            {message && <p className="text-gray-600">{message}</p>}
+            <p className="text-gray-800 font-medium mb-1">{title}</p>
+            {message && <p className="text-gray-600 text-sm">{message}</p>}
           </div>
           <div className="px-6 py-4 bg-gray-50 border-t flex justify-end">
             <button

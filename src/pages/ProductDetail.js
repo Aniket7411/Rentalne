@@ -325,17 +325,13 @@ const ProductDetail = () => {
     if (!product || product.status === 'Rented Out') return;
     const pid = product._id || product.id;
     if (!pid) return;
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: location.pathname } } });
-      return;
-    }
-    if (user.role !== 'user') {
+    if (user && user.role !== 'user') {
       setCartHint('Please sign in as a customer to add to cart.');
       return;
     }
     setCartBusy(true);
     setCartHint('');
-    const res = await addRentalToCart(pid, cartPaymentOption);
+    const res = await addRentalToCart(pid, cartPaymentOption, product);
     setCartBusy(false);
     if (res.success) {
       setCartHint('Added to cart');

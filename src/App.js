@@ -17,6 +17,8 @@ import ServiceRequest from './pages/user/ServiceRequest';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import FaqPage from './pages/FaqPage';
 
 // Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -28,6 +30,16 @@ import ManageACs from './pages/admin/ManageACs';
 import ManageProducts from './pages/admin/ManageProducts';
 import Leads from './pages/admin/Leads';
 import ManageServices from './pages/admin/ManageServices';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminFaqs from './pages/admin/AdminFaqs';
+import AdminTickets from './pages/admin/AdminTickets';
+import AdminServiceRequests from './pages/admin/AdminServiceRequests';
+import VendorDashboard from './pages/vendor/VendorDashboard';
+import VendorAddAC from './pages/vendor/AddAC';
+import VendorManageACs from './pages/vendor/ManageACs';
+import VendorLeads from './pages/vendor/Leads';
 import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -67,6 +79,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/faq" element={<FaqPage />} />
               <Route path="/admin/login" element={<Login />} />
               <Route path="/admin-login" element={<Login />} />
 
@@ -79,27 +93,48 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/cart"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <CartPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/checkout"
-                element={
-                  <ProtectedRoute redirectTo="/login">
-                    <CheckoutPage />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Cart / checkout: guests can use local cart; payment requires login (see CheckoutPage). */}
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route
                 path="/orders/:orderId"
                 element={
                   <ProtectedRoute redirectTo="/login">
                     <OrderDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Vendor (role === vendor) — UI uses mock API in services/dummyData.js; wire to backend when vendor APIs are finalized */}
+              <Route
+                path="/vendor/dashboard"
+                element={
+                  <ProtectedRoute requireVendor>
+                    <VendorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vendor/add-ac"
+                element={
+                  <ProtectedRoute requireVendor>
+                    <VendorAddAC />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vendor/manage-acs"
+                element={
+                  <ProtectedRoute requireVendor>
+                    <VendorManageACs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vendor/leads"
+                element={
+                  <ProtectedRoute requireVendor>
+                    <VendorLeads />
                   </ProtectedRoute>
                 }
               />
@@ -166,6 +201,54 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin={true}>
                     <ManageServices />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/orders"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/coupons"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminCoupons />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/faqs"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminFaqs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/tickets"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminTickets />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/service-requests"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminServiceRequests />
                   </ProtectedRoute>
                 }
               />

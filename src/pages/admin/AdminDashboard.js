@@ -2,7 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
-import { ShoppingBag, Users, Plus, List, TrendingUp, AlertCircle } from 'lucide-react';
+import {
+  ShoppingBag,
+  Users,
+  Plus,
+  List,
+  TrendingUp,
+  AlertCircle,
+  Package,
+  Settings,
+  Tag,
+  HelpCircle,
+  MessageSquare,
+  Wrench,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const AdminDashboard = () => {
@@ -223,6 +236,72 @@ const AdminDashboard = () => {
                             <div>
                                 <p className="font-semibold">Manage Services</p>
                                 <p className="text-sm text-text-light group-hover:text-white">AC, WM & Fridge services</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/orders"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-slate-600 rounded-lg hover:bg-slate-800 hover:text-white transition group"
+                        >
+                            <Package className="w-6 h-6 text-slate-700 group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">All orders</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Status & payment (pay later → paid)</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/settings"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <Settings className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">Checkout settings</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Discounts & advance ₹</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/coupons"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <Tag className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">Coupons</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Create & delete codes</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/faqs"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <HelpCircle className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">FAQs</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Public help content</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/tickets"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <MessageSquare className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">Tickets</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Support inbox</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/service-requests"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <Wrench className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">Service requests</p>
+                                <p className="text-sm text-text-light group-hover:text-white">Repair / post-order</p>
                             </div>
                         </Link>
                     </div>

@@ -533,7 +533,7 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
         {/* Success modal */}
         <SuccessModal
           isOpen={successOpen}
-          title="Booking Confirmed"
+          title="Booking confirmed"
           message="You will get a call from us very soon."
           onClose={() => {
             setSuccessOpen(false);

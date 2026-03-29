@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, Lock, Tag, ArrowLeft } from 'lucide-react';
+import { Loader2, Lock, Tag, ArrowLeft, LogIn } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import { generateOrderId, roundMoney } from '../utils/orderHelpers';
-import { categoryForCouponFromProduct } from '../utils/couponHelpers';
 import { openRazorpayCheckout } from '../utils/razorpay';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
+import CheckoutFeedbackModal from '../components/CheckoutFeedbackModal';
 import { defaultBrowsePath } from '../utils/browseUrls';
 
 const DURATIONS = [3, 6, 9, 11, 12, 24];
@@ -31,8 +31,27 @@ const CheckoutPage = () => {
   const [couponData, setCouponData] = useState(null);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutModal, setCheckoutModal] = useState(null);
+  const modalNavigateRef = useRef(null);
+
+  const closeCheckoutModal = () => {
+    setCheckoutModal(null);
+    const path = modalNavigateRef.current;
+    modalNavigateRef.current = null;
+    if (path) navigate(path);
+  };
+
+  const openCheckoutModal = (opts) => {
+    modalNavigateRef.current = opts.nextPath || null;
+    setCheckoutModal({
+      variant: opts.variant,
+      title: opts.title,
+      message: opts.message,
+    });
+  };
 
   useEffect(() => {
+    if (!user || user.role !== 'user') return;
     (async () => {
       const [p, s] = await Promise.all([
         apiService.getUserProfile(),
@@ -41,7 +60,15 @@ const CheckoutPage = () => {
       if (p.success) setProfile(p.data);
       if (s.success && s.data) setSettings((prev) => ({ ...prev, ...s.data }));
     })();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    (async () => {
+      if (user && user.role === 'user') return;
+      const s = await apiService.getSettings();
+      if (s.success && s.data) setSettings((prev) => ({ ...prev, ...s.data }));
+    })();
+  }, [user]);
 
   const rentals = cart.rentals || [];
   const services = cart.services || [];
@@ -182,54 +209,93 @@ const CheckoutPage = () => {
   };
 
   const runRazorpay = (orderKey, amountRupees, finishSubmitting) => {
-    apiService
-      .createRazorpayPaymentOrder(orderKey, roundMoney(amountRupees))
-      .then((payRes) => {
-        if (!payRes.success || !payRes.data) {
-          const payErr = payRes.error
-            ? `${payRes.message || 'Could not start payment'} (${payRes.error})`
-            : payRes.message;
-          showError(payErr || 'Could not start payment');
-          finishSubmitting();
-          return;
-        }
-        const d = payRes.data;
-        return openRazorpayCheckout({
-          key: d.key,
-          orderId: d.razorpayOrderId,
-          prefill: {
-            email: profile?.email || user?.email,
-            contact: profile?.phone || user?.phone,
-          },
-          onSuccess: async (response) => {
-            const v = await apiService.verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+    const amt = roundMoney(amountRupees);
+
+    const openGateway = (d, verifyMode) => {
+      const rzpOrderId = d.razorpayOrderId || d.razorpay_order_id;
+      if (!d.key || !rzpOrderId) {
+        finishSubmitting();
+        showError('Invalid payment session from server');
+        return Promise.resolve();
+      }
+      return openRazorpayCheckout({
+        key: d.key,
+        orderId: rzpOrderId,
+        prefill: {
+          email: profile?.email || user?.email,
+          contact: profile?.phone || user?.phone,
+        },
+        onSuccess: async (response) => {
+          const gatewayBody = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          };
+          let v;
+          if (verifyMode === 'order') {
+            v = await apiService.verifyOrderGatewayPayment(orderKey, gatewayBody);
+          } else {
+            v = await apiService.verifyRazorpayPayment({
+              ...gatewayBody,
               paymentId: d.paymentId,
             });
-            finishSubmitting();
-            if (v.success) {
-              await apiService.clearCart().catch(() => {});
-              await refreshCart();
-              success('Payment successful');
-              navigate(`/orders/${encodeURIComponent(orderKey)}`);
-            } else {
-              showError(
-                v.error
-                  ? `${v.message || 'Payment verification failed'} (${v.error})`
-                  : v.message || 'Payment verification failed'
-              );
-            }
-          },
-          onDismiss: () => {
-            finishSubmitting();
-            showError('Payment cancelled');
-          },
-        }).catch(() => {
+          }
           finishSubmitting();
-          showError('Razorpay failed to load');
-        });
+          if (v.success) {
+            await apiService.clearCart().catch(() => {});
+            await refreshCart();
+            openCheckoutModal({
+              variant: 'success',
+              title: 'Payment successful',
+              message: 'Your order is confirmed. You can view details from your dashboard.',
+              nextPath: `/orders/${encodeURIComponent(orderKey)}`,
+            });
+          } else {
+            openCheckoutModal({
+              variant: 'error',
+              title: 'Payment verification failed',
+              message: v.error
+                ? `${v.message || 'Verification failed'} (${v.error})`
+                : v.message || 'Verification failed',
+            });
+          }
+        },
+        onDismiss: () => {
+          finishSubmitting();
+          showError('Payment cancelled');
+        },
+      }).catch(() => {
+        finishSubmitting();
+        showError('Razorpay failed to load');
+      });
+    };
+
+    apiService
+      .createRazorpayPaymentOrder(orderKey, amt)
+      .then((payRes) => {
+        if (payRes.success && payRes.data) {
+          return openGateway(payRes.data, 'payments');
+        }
+        if (payRes.error === 'ORDER_ALREADY_PAID') {
+          finishSubmitting();
+          showError(payRes.message || 'Order is already paid');
+          return;
+        }
+        return apiService
+          .createOrderRetryRazorpay(orderKey, Math.round(Number(amt) * 100))
+          .then((retryRes) => {
+            if (!retryRes.success || !retryRes.data) {
+              const msg = retryRes.error
+                ? `${retryRes.message || 'Could not start payment'} (${retryRes.error})`
+                : payRes.error
+                  ? `${payRes.message || 'Could not start payment'} (${payRes.error})`
+                  : retryRes.message || payRes.message || 'Could not start payment';
+              showError(msg || 'Could not start payment');
+              finishSubmitting();
+              return;
+            }
+            return openGateway(retryRes.data, 'order');
+          });
       })
       .catch(() => {
         finishSubmitting();
@@ -239,6 +305,14 @@ const CheckoutPage = () => {
 
   const placeOrder = async (e) => {
     e.preventDefault();
+    if (!user || user.role !== 'user') {
+      openCheckoutModal({
+        variant: 'error',
+        title: 'Sign in required',
+        message: 'Please log in or create an account to place an order. Your cart is saved.',
+      });
+      return;
+    }
     if (!rentals.length && !services.length) {
       showError('Cart is empty');
       return;
@@ -258,11 +332,13 @@ const CheckoutPage = () => {
     const payload = buildOrderPayload(orderId);
     const created = await apiService.createOrder(payload);
     if (!created.success) {
-      showError(
-        created.error
+      openCheckoutModal({
+        variant: 'error',
+        title: 'Could not place order',
+        message: created.error
           ? `${created.message || 'Order failed'} (${created.error})`
-          : created.message || 'Order failed'
-      );
+          : created.message || 'Order failed',
+      });
       finish();
       return;
     }
@@ -273,8 +349,13 @@ const CheckoutPage = () => {
     if (paymentOption === 'payLater') {
       await apiService.clearCart().catch(() => {});
       await refreshCart();
-      success('Order placed');
-      navigate(`/orders/${encodeURIComponent(orderKey)}`);
+      openCheckoutModal({
+        variant: 'success',
+        title: 'Order placed',
+        message:
+          'Your order is saved. For pay later, complete payment anytime from order details—or staff may record cash/UPI as paid.',
+        nextPath: `/orders/${encodeURIComponent(orderKey)}`,
+      });
       finish();
       return;
     }
@@ -295,8 +376,78 @@ const CheckoutPage = () => {
     );
   }
 
+  const isCustomer = user && user.role === 'user';
+
+  if (!isCustomer) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-10 px-4">
+        <CheckoutFeedbackModal
+          isOpen={!!checkoutModal}
+          variant={checkoutModal?.variant || 'success'}
+          title={checkoutModal?.title || ''}
+          message={checkoutModal?.message}
+          onClose={closeCheckoutModal}
+        />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <div className="max-w-lg mx-auto space-y-6">
+          <button
+            type="button"
+            onClick={() => navigate('/cart')}
+            className="flex items-center gap-2 text-text-light hover:text-primary-blue"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to cart
+          </button>
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 space-y-4">
+            <h1 className="text-2xl font-bold text-text-dark flex items-center gap-2">
+              <LogIn className="w-7 h-7 text-primary-blue" />
+              Sign in to pay
+            </h1>
+            <p className="text-sm text-text-light">
+              You can add rentals to your cart without an account. To place the order and pay (card/UPI, advance, or pay
+              later), sign in with your email or sign up—use your mobile number on your profile so we can reach you.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/login"
+                state={{ from: { pathname: '/checkout' } }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-blue text-white rounded-xl font-semibold text-center"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                state={{ from: { pathname: '/checkout' } }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-primary-blue text-primary-blue rounded-xl font-semibold text-center"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 text-sm">
+            <p className="font-semibold text-text-dark mb-2">Order preview</p>
+            <div className="flex justify-between">
+              <span>Subtotal ({rentals.length + services.length} items)</span>
+              <span>₹{subtotal.toLocaleString('en-IN')}</span>
+            </div>
+            <p className="text-xs text-text-light mt-3">
+              After login, discounts and coupons apply on the next step.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-10 px-4">
+      <CheckoutFeedbackModal
+        isOpen={!!checkoutModal}
+        variant={checkoutModal?.variant || 'success'}
+        title={checkoutModal?.title || ''}
+        message={checkoutModal?.message}
+        onClose={closeCheckoutModal}
+      />
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <div className="max-w-lg mx-auto">
         <button

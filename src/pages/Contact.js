@@ -64,9 +64,10 @@ const Contact = () => {
       const formattedPhone = formData.phone ? getFormattedPhone(formData.phone) : '';
 
       if (formData.type === 'vendor-listing') {
-        // Submit vendor listing request
+        // Validator requires businessName (see BACKEND_API_REFERENCE — vendor-listing-request).
         response = await apiService.submitVendorListingRequest({
           name: formData.name,
+          businessName: formData.name,
           email: formData.email,
           phone: formattedPhone,
           message: formData.message,
@@ -240,7 +241,8 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text-dark mb-2">
-                    Name <span className="text-red-500">*</span>
+                    {formData.type === 'vendor-listing' ? 'Business name' : 'Name'}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -248,6 +250,9 @@ const Contact = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    placeholder={
+                      formData.type === 'vendor-listing' ? 'Registered business or trading name' : ''
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                   />
                 </div>

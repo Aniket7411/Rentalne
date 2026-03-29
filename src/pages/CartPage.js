@@ -2,24 +2,23 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { apiService } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import { defaultBrowsePath } from '../utils/browseUrls';
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { cart, loading, refreshCart } = useCart();
+  const { cart, loading, refreshCart, removeFromCart } = useCart();
   const { toasts, removeToast, success, error: showError } = useToast();
 
   const rentals = cart.rentals || [];
   const services = cart.services || [];
 
   const removeLine = async (itemId) => {
-    const res = await apiService.removeCartItem(itemId);
+    const res = await removeFromCart(itemId);
     if (res.success) {
       success('Removed from cart');
-      refreshCart();
+      await refreshCart();
     } else {
       showError(res.message || 'Could not remove');
     }

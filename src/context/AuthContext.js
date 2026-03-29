@@ -116,6 +116,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (token, newPassword) => {
+    try {
+      return await apiService.resetPassword(token, newPassword);
+    } catch (error) {
+      return { success: false, message: 'Request failed' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
@@ -130,10 +138,12 @@ export const AuthProvider = ({ children }) => {
     sendLoginOtp,
     signup,
     forgotPassword,
+    resetPassword,
     logout,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     isUser: user?.role === 'user',
+    isVendor: user?.role === 'vendor',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

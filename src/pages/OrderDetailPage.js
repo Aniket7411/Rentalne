@@ -56,48 +56,79 @@ const OrderDetailPage = () => {
       order.paymentOption === 'payAdvance' && order.advanceAmount != null
         ? order.advanceAmount
         : order.finalTotal;
+    const amtRupees = roundMoney(amt);
 
-    apiService
-      .createRazorpayPaymentOrder(oid, roundMoney(amt))
-      .then((payRes) => {
-        if (!payRes.success || !payRes.data) {
-          showError(
-            payRes.error
-              ? `${payRes.message || 'Payment failed'} (${payRes.error})`
-              : payRes.message || 'Payment failed'
-          );
-          setPaying(false);
-          return;
-        }
-        const d = payRes.data;
-        return openRazorpayCheckout({
-          key: d.key,
-          orderId: d.razorpayOrderId,
-          prefill: {
-            email: user?.email,
-            contact: user?.phone,
-          },
-          onSuccess: async (response) => {
-            const v = await apiService.verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+    const openGateway = (d, verifyMode) => {
+      const rzpOrderId = d.razorpayOrderId || d.razorpay_order_id;
+      if (!d.key || !rzpOrderId) {
+        setPaying(false);
+        showError('Invalid payment session from server');
+        return;
+      }
+      return openRazorpayCheckout({
+        key: d.key,
+        orderId: rzpOrderId,
+        prefill: {
+          email: user?.email,
+          contact: user?.phone,
+        },
+        onSuccess: async (response) => {
+          const gatewayBody = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          };
+          let v;
+          if (verifyMode === 'order') {
+            v = await apiService.verifyOrderGatewayPayment(oid, gatewayBody);
+          } else {
+            v = await apiService.verifyRazorpayPayment({
+              ...gatewayBody,
               paymentId: d.paymentId,
             });
-            setPaying(false);
-            if (v.success) {
-              success('Payment successful');
-              await refreshOrder();
-            } else {
-              showError(
-                v.error
-                  ? `${v.message || 'Verification failed'} (${v.error})`
-                  : v.message || 'Verification failed'
-              );
+          }
+          setPaying(false);
+          if (v.success) {
+            success('Payment successful');
+            await refreshOrder();
+          } else {
+            showError(
+              v.error
+                ? `${v.message || 'Verification failed'} (${v.error})`
+                : v.message || 'Verification failed'
+            );
+          }
+        },
+        onDismiss: () => setPaying(false),
+      });
+    };
+
+    apiService
+      .createRazorpayPaymentOrder(oid, amtRupees)
+      .then((payRes) => {
+        if (payRes.success && payRes.data) {
+          return openGateway(payRes.data, 'payments');
+        }
+        if (payRes.error === 'ORDER_ALREADY_PAID') {
+          setPaying(false);
+          showError(payRes.message || 'Order is already paid');
+          return;
+        }
+        return apiService
+          .createOrderRetryRazorpay(oid, Math.round(Number(amtRupees) * 100))
+          .then((retryRes) => {
+            if (!retryRes.success || !retryRes.data) {
+              const msg = retryRes.error
+                ? `${retryRes.message || 'Payment failed'} (${retryRes.error})`
+                : payRes.error
+                  ? `${payRes.message || 'Payment failed'} (${payRes.error})`
+                  : retryRes.message || payRes.message || 'Payment failed';
+              showError(msg);
+              setPaying(false);
+              return;
             }
-          },
-          onDismiss: () => setPaying(false),
-        });
+            return openGateway(retryRes.data, 'order');
+          });
       })
       .catch(() => {
         setPaying(false);

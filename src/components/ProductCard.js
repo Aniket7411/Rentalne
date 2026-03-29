@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../services/api';
 
 /**
  * Listing card fields align with `GET /api/products` (or `/api/acs`) items:
@@ -23,7 +25,13 @@ function pickPriceForCard(product, listingDuration) {
 }
 
 const ProductCard = ({ product, listingDuration }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [saved, setSaved] = useState(false);
+  const [wishLoading, setWishLoading] = useState(false);
+
+  const productId = product._id || product.id;
 
   const getCategorySlug = () => {
     const raw = product.category || product.productType || 'AC';
@@ -75,11 +83,46 @@ const ProductCard = ({ product, listingDuration }) => {
 
   const primaryImage = product.images?.length ? product.images[0] : null;
 
-  const handleWishlistClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSaved((v) => !v);
-  };
+  useEffect(() => {
+    let cancelled = false;
+    if (!user || !productId) {
+      setSaved(false);
+      return;
+    }
+    (async () => {
+      const r = await apiService.checkWishlistProduct(productId);
+      if (!cancelled && r.success) setSaved(r.isInWishlist);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, productId]);
+
+  const handleWishlistClick = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!productId || wishLoading) return;
+      if (!user) {
+        const returnPath = `${location.pathname}${location.search || ''}`;
+        navigate('/login', { state: { from: { pathname: returnPath } } });
+        return;
+      }
+      setWishLoading(true);
+      try {
+        if (saved) {
+          const r = await apiService.removeFromWishlist(productId);
+          if (r.success) setSaved(false);
+        } else {
+          const r = await apiService.addToWishlist(productId);
+          if (r.success) setSaved(true);
+        }
+      } finally {
+        setWishLoading(false);
+      }
+    },
+    [user, productId, saved, wishLoading, navigate, location.pathname, location.search]
+  );
 
   const route = getProductRoute();
   const available = product.status === 'Available';
@@ -122,8 +165,10 @@ const ProductCard = ({ product, listingDuration }) => {
         <button
           type="button"
           onClick={handleWishlistClick}
-          className="absolute right-3 top-3 z-[1] bg-transparent p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-0 rounded-sm"
-          aria-label={saved ? 'Remove from saved' : 'Save to wishlist'}
+          disabled={wishLoading}
+          className="absolute right-3 top-3 z-[1] bg-transparent p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-0 rounded-sm disabled:opacity-60"
+          aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
+          aria-busy={wishLoading}
         >
           <Heart
             className={`h-5 w-5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)] ${

@@ -45,6 +45,7 @@ const Header = () => {
                 <Link to={defaultBrowsePath()} className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Rent Now</Link>
                 <Link to="/about" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">About</Link>
                 <Link to="/contact" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Contact</Link>
+                <Link to="/faq" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">FAQ</Link>
                 <Link to="/service-request" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Book Services</Link>
                 <Link
                   to="/cart"
@@ -74,6 +75,9 @@ const Header = () => {
                   <Users className="w-4 h-4" />
                   <span>Leads</span>
                 </Link>
+                <Link to="/admin/orders" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">
+                  Orders
+                </Link>
                 <Link to="/admin/manage-services" className="flex items-center space-x-2 px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">
                   <Wrench className="w-4 h-4" />
                   <span>Services</span>
@@ -87,6 +91,7 @@ const Header = () => {
               <>
                 <Link to="/" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Home</Link>
                 <Link to={defaultBrowsePath()} className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Rent Now</Link>
+                <Link to="/faq" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">FAQ</Link>
                 <Link
                   to="/cart"
                   className="relative flex items-center justify-center p-2 rounded-lg text-neutral-900 hover:text-sky-500 hover:bg-slate-50"
@@ -138,6 +143,7 @@ const Header = () => {
                   <Link to={defaultBrowsePath()} onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Rent Now</Link>
                   <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">About</Link>
                   <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Contact</Link>
+                  <Link to="/faq" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">FAQ</Link>
                   <Link to="/service-request" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Service Request</Link>
                   <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all flex items-center gap-2">
                     <ShoppingCart className="w-4 h-4" />
@@ -152,6 +158,12 @@ const Header = () => {
                   <Link to="/admin/add-ac" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Add AC</Link>
                   <Link to="/admin/manage-acs" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Manage ACs</Link>
                   <Link to="/admin/leads" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Leads</Link>
+                  <Link to="/admin/orders" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Orders</Link>
+                  <Link to="/admin/settings" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Settings</Link>
+                  <Link to="/admin/coupons" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Coupons</Link>
+                  <Link to="/admin/faqs" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">FAQs</Link>
+                  <Link to="/admin/tickets" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Tickets</Link>
+                  <Link to="/admin/service-requests" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Svc requests</Link>
                   <Link to="/admin/manage-services" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Services</Link>
                   <button onClick={handleLogout} className="px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 text-left font-medium transition-all">Logout</button>
                 </>
@@ -159,6 +171,7 @@ const Header = () => {
                 <>
                   <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Home</Link>
                   <Link to={defaultBrowsePath()} onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Rent Now</Link>
+                  <Link to="/faq" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">FAQ</Link>
                   <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all flex items-center gap-2">
                     <ShoppingCart className="w-4 h-4" />
                     Cart{itemCount > 0 ? ` (${itemCount})` : ''}

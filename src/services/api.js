@@ -29,7 +29,7 @@ const buildRentalInquiryPayload = (data) => ({
   duration: normalizeInquiryDuration(data),
 });
 
-// Production API host (see Network: GET .../api/acs?category=AC&duration=3)
+// Production API host (`/api` prefix). Public catalog: prefer GET /products (legacy: /acs).
 const API_BASE_URL =
   process.env.REACT_APP_API_URL?.replace(/\s+/g, '') || 'https://api.ashenterprises.in/api';
 
@@ -66,7 +66,7 @@ const normalizeAuthUser = (u) => {
 const apiEnvelopeFailed = (body) => body && body.success === false;
 
 /**
- * Normalize list endpoints (`GET /acs`, products) — some gateways return `data` as array,
+ * Normalize list endpoints (`GET /products`, `GET /acs`) — some gateways return `data` as array,
  * or nested `{ products|items|results }`, which previously yielded zero recommendations.
  */
 const normalizeProductListFromBody = (body) => {
@@ -82,7 +82,7 @@ const normalizeProductListFromBody = (body) => {
   return [];
 };
 
-/** Shared query normalization for public `GET /acs`. */
+/** Shared query normalization for public catalog list endpoints. */
 const buildPublicAcsParams = (filters = {}) => {
   const params = { ...filters };
   if (params.categories) {
@@ -105,6 +105,99 @@ const buildPublicAcsParams = (filters = {}) => {
     if (params[k] === '' || params[k] == null) delete params[k];
   });
   return params;
+};
+
+const PUBLIC_PRODUCTS_PATH = '/products';
+const PUBLIC_ACS_PATH = '/acs';
+const ADMIN_CATALOG_PRIMARY = '/admin/products';
+const ADMIN_CATALOG_LEGACY = '/admin/acs';
+
+/** Prefer `GET /products`; fall back to `GET /acs` if the route is not mounted. */
+const getPublicCatalogBody = async (params) => {
+  try {
+    const { data: body } = await api.get(PUBLIC_PRODUCTS_PATH, { params });
+    return body;
+  } catch (err) {
+    const s = err.response?.status;
+    if (s === 404 || s === 405) {
+      const { data: body } = await api.get(PUBLIC_ACS_PATH, { params });
+      return body;
+    }
+    throw err;
+  }
+};
+
+const getPublicProductByIdBody = async (id) => {
+  const enc = encodeURIComponent(id);
+  try {
+    const { data: body } = await api.get(`${PUBLIC_PRODUCTS_PATH}/${enc}`);
+    return body;
+  } catch (err) {
+    const s = err.response?.status;
+    if (s === 404 || s === 405) {
+      const { data: body } = await api.get(`${PUBLIC_ACS_PATH}/${enc}`);
+      return body;
+    }
+    throw err;
+  }
+};
+
+const getAdminCatalogListResponse = async () => {
+  try {
+    return await api.get(ADMIN_CATALOG_PRIMARY);
+  } catch (e) {
+    const s = e.response?.status;
+    if (s === 404 || s === 405) {
+      return await api.get(ADMIN_CATALOG_LEGACY);
+    }
+    throw e;
+  }
+};
+
+const postAdminCatalog = async (body) => {
+  try {
+    return await api.post(ADMIN_CATALOG_PRIMARY, body);
+  } catch (e) {
+    const s = e.response?.status;
+    if (s === 404 || s === 405) {
+      return await api.post(ADMIN_CATALOG_LEGACY, body);
+    }
+    throw e;
+  }
+};
+
+const patchAdminCatalog = async (id, body) => {
+  const enc = encodeURIComponent(id);
+  try {
+    return await api.patch(`${ADMIN_CATALOG_PRIMARY}/${enc}`, body);
+  } catch (e) {
+    const s = e.response?.status;
+    if (s === 404 || s === 405) {
+      return await api.patch(`${ADMIN_CATALOG_LEGACY}/${enc}`, body);
+    }
+    throw e;
+  }
+};
+
+const deleteAdminCatalog = async (id) => {
+  const enc = encodeURIComponent(id);
+  try {
+    return await api.delete(`${ADMIN_CATALOG_PRIMARY}/${enc}`);
+  } catch (e) {
+    const s = e.response?.status;
+    if (s === 404 || s === 405) {
+      return await api.delete(`${ADMIN_CATALOG_LEGACY}/${enc}`);
+    }
+    throw e;
+  }
+};
+
+/** Service cart: backend expects `bookingDetails.addressType === "other"`, not `someoneElse`. */
+const normalizeCartServiceBookingDetails = (bd) => {
+  if (!bd || typeof bd !== 'object') return bd;
+  const out = { ...bd };
+  if (out.addressType === 'someoneElse') out.addressType = 'other';
+  return out;
 };
 
 /** Product.price keys per API: 3, 6, 9, 11, 12, 24 (not `3months`). */
@@ -320,6 +413,57 @@ export const apiService = {
     }
   },
 
+  resetPassword: async (token, newPassword) => {
+    try {
+      const { data: body } = await api.post('/auth/reset-password', {
+        token,
+        newPassword,
+      });
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Could not reset password',
+          error: body.error,
+        };
+      }
+      return {
+        success: true,
+        message: body.message || 'Password updated',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Could not reset password',
+        error: error.response?.data?.error,
+      };
+    }
+  },
+
+  /** Public FAQ list (`GET /api/faqs`) */
+  getFaqs: async () => {
+    try {
+      const { data: body } = await api.get('/faqs');
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          data: [],
+          message: body.message,
+        };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      return {
+        success: true,
+        data: Array.isArray(raw) ? raw : [],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load FAQs',
+      };
+    }
+  },
+
   sendOtp: async (phone) => {
     try {
       const { data } = await api.post('/auth/send-otp', { phone });
@@ -376,7 +520,7 @@ export const apiService = {
   getACs: async (filters = {}) => {
     try {
       const params = buildPublicAcsParams(filters);
-      const { data: body } = await api.get('/acs', { params });
+      const body = await getPublicCatalogBody(params);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -403,7 +547,7 @@ export const apiService = {
 
   getACById: async (id) => {
     try {
-      const { data: body } = await api.get(`/acs/${id}`);
+      const body = await getPublicProductByIdBody(id);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -428,11 +572,18 @@ export const apiService = {
   createRentalInquiry: async (acId, inquiryData) => {
     try {
       const dataToSend = buildRentalInquiryPayload(inquiryData);
-      const response = await api.post(`/acs/${acId}/inquiry`, dataToSend);
+      const { data: body } = await api.post(`/acs/${encodeURIComponent(acId)}/inquiry`, dataToSend);
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to submit inquiry',
+          error: body.error,
+        };
+      }
       return {
         success: true,
-        message: response.data.message || 'Rental inquiry submitted successfully',
-        data: response.data.data || response.data,
+        message: body.message || 'Rental inquiry submitted successfully',
+        data: body.data || body,
       };
     } catch (error) {
       return {
@@ -448,7 +599,10 @@ export const apiService = {
         ...buildRentalInquiryPayload(inquiryData),
         productId,
       };
-      const { data: body } = await api.post(`/acs/${productId}/inquiry`, dataToSend);
+      const { data: body } = await api.post(
+        `/acs/${encodeURIComponent(productId)}/inquiry`,
+        dataToSend
+      );
       if (body && body.success === false) {
         return {
           success: false,
@@ -509,15 +663,23 @@ export const apiService = {
   // Vendor Listing Request - Public endpoint
   submitVendorListingRequest: async (vendorData) => {
     try {
-      const response = await api.post('/vendor-listing-request', vendorData);
+      const { data: body } = await api.post('/vendor-listing-request', vendorData);
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to submit request',
+          error: body.error,
+        };
+      }
       return {
         success: true,
-        message: response.data.message || 'Request submitted successfully. We will contact you soon.',
+        message: body.message || 'Request submitted successfully. We will contact you soon.',
       };
     } catch (error) {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to submit request',
+        error: error.response?.data?.error,
       };
     }
   },
@@ -525,7 +687,7 @@ export const apiService = {
   // Admin - AC Management
   getAdminACs: async () => {
     try {
-      const response = await api.get('/admin/acs');
+      const response = await getAdminCatalogListResponse();
       const body = response.data;
       let list = normalizeProductListFromBody(body);
       if (!list.length && Array.isArray(body?.data)) {
@@ -547,7 +709,7 @@ export const apiService = {
   addAC: async (acData) => {
     try {
       const dataToSend = buildAdminProductPayload({ ...acData, category: acData.category || 'AC' });
-      const { data: body } = await api.post('/admin/acs', dataToSend);
+      const { data: body } = await postAdminCatalog(dataToSend);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -573,7 +735,7 @@ export const apiService = {
   addProduct: async (productData) => {
     try {
       const dataToSend = buildAdminProductPayload(productData);
-      const { data: body } = await api.post('/admin/acs', dataToSend);
+      const { data: body } = await postAdminCatalog(dataToSend);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -595,11 +757,11 @@ export const apiService = {
     }
   },
 
-  /** Public catalog: production uses GET /acs?category=AC&duration=3 (same Product shape as /products). */
+  /** Public catalog: GET /products (falls back to GET /acs). Same Product shape. */
   getProducts: async (filters = {}) => {
     try {
       const params = buildPublicAcsParams(filters);
-      const { data: body } = await api.get('/acs', { params });
+      const body = await getPublicCatalogBody(params);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -626,7 +788,7 @@ export const apiService = {
 
   /**
    * Related / recommended rows on product detail: same category, prefer same brand,
-   * fall back to category-only then unfiltered (per catalog `GET /acs` query params).
+   * fall back to category-only then unfiltered (same query params as public catalog).
    */
   getRecommendedProducts: async ({ category, brand, excludeId, limit = 24 }) => {
     const ex = excludeId != null ? String(excludeId) : '';
@@ -642,21 +804,17 @@ export const apiService = {
     };
     try {
       if (category && brand) {
-        const { data: body } = await api.get('/acs', {
-          params: buildPublicAcsParams({ category, brand, limit }),
-        });
+        const body = await getPublicCatalogBody(
+          buildPublicAcsParams({ category, brand, limit })
+        );
         if (!apiEnvelopeFailed(body)) add(normalizeProductListFromBody(body));
       }
       if (collected.length < 4 && category) {
-        const { data: body } = await api.get('/acs', {
-          params: buildPublicAcsParams({ category, limit }),
-        });
+        const body = await getPublicCatalogBody(buildPublicAcsParams({ category, limit }));
         if (!apiEnvelopeFailed(body)) add(normalizeProductListFromBody(body));
       }
       if (collected.length < 2) {
-        const { data: body } = await api.get('/acs', {
-          params: { limit },
-        });
+        const body = await getPublicCatalogBody({ limit });
         if (!apiEnvelopeFailed(body)) add(normalizeProductListFromBody(body));
       }
       return { success: true, data: collected.slice(0, 8) };
@@ -671,7 +829,7 @@ export const apiService = {
 
   getProductById: async (id, productType) => {
     try {
-      const { data: body } = await api.get(`/acs/${id}`);
+      const body = await getPublicProductByIdBody(id);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -774,7 +932,7 @@ export const apiService = {
       }
       // If images is undefined, don't include it in dataToSend (backend preserves existing)
 
-      const { data: body } = await api.patch(`/admin/acs/${id}`, dataToSend);
+      const { data: body } = await patchAdminCatalog(id, dataToSend);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -798,7 +956,7 @@ export const apiService = {
 
   deleteAC: async (id) => {
     try {
-      const { data: body } = await api.delete(`/admin/acs/${id}`);
+      const { data: body } = await deleteAdminCatalog(id);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -853,7 +1011,7 @@ export const apiService = {
       if (productData.benefits !== undefined) {
         patch.benefits = productData.benefits;
       }
-      const { data: body } = await api.patch(`/admin/acs/${id}`, patch);
+      const { data: body } = await patchAdminCatalog(id, patch);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -876,7 +1034,7 @@ export const apiService = {
 
   deleteProduct: async (id) => {
     try {
-      const { data: body } = await api.delete(`/admin/acs/${id}`);
+      const { data: body } = await deleteAdminCatalog(id);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -1096,11 +1254,24 @@ export const apiService = {
 
   getUserOrders: async (userId, params = {}) => {
     try {
-      const response = await api.get(`/users/${userId}/orders`, { params });
+      const { data: body } = await api.get(`/users/${encodeURIComponent(userId)}/orders`, { params });
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to fetch orders',
+          data: [],
+        };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      const list = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === 'object' && Array.isArray(raw.orders)
+          ? raw.orders
+          : [];
       return {
         success: true,
-        data: response.data.data || response.data,
-        pagination: response.data.pagination,
+        data: list,
+        pagination: body.pagination || (raw && raw.pagination),
       };
     } catch (error) {
       return {
@@ -1134,10 +1305,18 @@ export const apiService = {
 
   getUserWishlist: async () => {
     try {
-      const response = await api.get('/wishlist');
+      const { data: body } = await api.get('/wishlist');
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to fetch wishlist',
+          data: [],
+        };
+      }
+      const raw = body.data !== undefined ? body.data : body;
       return {
         success: true,
-        data: response.data.data || response.data,
+        data: Array.isArray(raw) ? raw : [],
       };
     } catch (error) {
       return {
@@ -1148,27 +1327,60 @@ export const apiService = {
     }
   },
 
+  /** `GET /api/wishlist/check/:productId` → `{ success, isInWishlist }` */
+  checkWishlistProduct: async (productId) => {
+    try {
+      const { data: body } = await api.get(
+        `/wishlist/check/${encodeURIComponent(productId)}`
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, isInWishlist: false };
+      }
+      const flag = body.isInWishlist ?? body.data?.isInWishlist;
+      return { success: true, isInWishlist: Boolean(flag) };
+    } catch (error) {
+      return { success: false, isInWishlist: false };
+    }
+  },
+
   addToWishlist: async (productId) => {
     try {
-      const response = await api.post('/wishlist', { productId });
+      const { data: body } = await api.post('/wishlist', { productId });
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to add to wishlist',
+          error: body.error,
+        };
+      }
       return {
         success: true,
-        message: response.data.message || 'Added to wishlist',
+        message: body.message || 'Added to wishlist',
       };
     } catch (error) {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to add to wishlist',
+        error: error.response?.data?.error,
       };
     }
   },
 
   removeFromWishlist: async (productId) => {
     try {
-      const response = await api.delete(`/wishlist/${productId}`);
+      const { data: body } = await api.delete(
+        `/wishlist/${encodeURIComponent(productId)}`
+      );
+      if (apiEnvelopeFailed(body)) {
+        return {
+          success: false,
+          message: body.message || 'Failed to remove from wishlist',
+          error: body.error,
+        };
+      }
       return {
         success: true,
-        message: response.data.message || 'Removed from wishlist',
+        message: body.message || 'Removed from wishlist',
       };
     } catch (error) {
       return {
@@ -1359,7 +1571,10 @@ export const apiService = {
 
   addCartService: async ({ serviceId, bookingDetails }) => {
     try {
-      const { data: body } = await api.post('/users/cart/services', { serviceId, bookingDetails });
+      const { data: body } = await api.post('/users/cart/services', {
+        serviceId,
+        bookingDetails: normalizeCartServiceBookingDetails(bookingDetails),
+      });
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -1428,7 +1643,21 @@ export const apiService = {
 
   createOrder: async (orderPayload) => {
     try {
-      const { data: body } = await api.post('/users/orders', orderPayload);
+      const payload =
+        orderPayload && Array.isArray(orderPayload.items)
+          ? {
+              ...orderPayload,
+              items: orderPayload.items.map((item) =>
+                item?.type === 'service' && item.bookingDetails
+                  ? {
+                      ...item,
+                      bookingDetails: normalizeCartServiceBookingDetails(item.bookingDetails),
+                    }
+                  : item
+              ),
+            }
+          : orderPayload;
+      const { data: body } = await api.post('/users/orders', payload);
       if (apiEnvelopeFailed(body)) {
         return {
           success: false,
@@ -1625,6 +1854,293 @@ export const apiService = {
       return {
         success: false,
         message: error.response?.data?.message || 'Verify failed',
+      };
+    }
+  },
+
+  // ——— Admin: settings, orders, coupons, FAQs, tickets, service-requests ———
+
+  getAdminSettings: async () => {
+    try {
+      const { data: body } = await api.get('/admin/settings');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, data: null };
+      }
+      return {
+        success: true,
+        data: body.data !== undefined ? body.data : body,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to load settings',
+        data: null,
+      };
+    }
+  },
+
+  updateAdminSettings: async (partial) => {
+    try {
+      const { data: body } = await api.put('/admin/settings', partial);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return {
+        success: true,
+        message: body.message,
+        data: body.data !== undefined ? body.data : body,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
+      };
+    }
+  },
+
+  getAdminOrders: async (params = {}) => {
+    try {
+      const { data: body } = await api.get('/admin/orders', { params });
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message, pagination: null };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      const list = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === 'object' && Array.isArray(raw.orders)
+          ? raw.orders
+          : [];
+      return {
+        success: true,
+        data: list,
+        pagination: body.pagination || raw?.pagination,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load orders',
+      };
+    }
+  },
+
+  patchAdminOrderStatus: async (orderId, status) => {
+    try {
+      const { data: body } = await api.patch(
+        `/admin/orders/${encodeURIComponent(orderId)}/status`,
+        { status }
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Status update failed',
+      };
+    }
+  },
+
+  patchAdminOrderPaymentStatus: async (orderId, paymentStatus) => {
+    try {
+      const { data: body } = await api.patch(
+        `/admin/orders/${encodeURIComponent(orderId)}/payment-status`,
+        { paymentStatus }
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Payment status update failed',
+      };
+    }
+  },
+
+  getAdminCoupons: async () => {
+    try {
+      const { data: body } = await api.get('/admin/coupons');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      return { success: true, data: Array.isArray(raw) ? raw : [] };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load coupons',
+      };
+    }
+  },
+
+  createAdminCoupon: async (payload) => {
+    try {
+      const { data: body } = await api.post('/admin/coupons', payload);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Create failed',
+      };
+    }
+  },
+
+  updateAdminCoupon: async (couponId, payload) => {
+    try {
+      const { data: body } = await api.put(
+        `/admin/coupons/${encodeURIComponent(couponId)}`,
+        payload
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
+      };
+    }
+  },
+
+  deleteAdminCoupon: async (couponId) => {
+    try {
+      const { data: body } = await api.delete(
+        `/admin/coupons/${encodeURIComponent(couponId)}`
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Delete failed',
+      };
+    }
+  },
+
+  createAdminFaq: async (payload) => {
+    try {
+      const { data: body } = await api.post('/admin/faqs', payload);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Create failed',
+      };
+    }
+  },
+
+  updateAdminFaq: async (id, payload) => {
+    try {
+      const { data: body } = await api.patch(
+        `/admin/faqs/${encodeURIComponent(id)}`,
+        payload
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
+      };
+    }
+  },
+
+  deleteAdminFaq: async (id) => {
+    try {
+      const { data: body } = await api.delete(`/admin/faqs/${encodeURIComponent(id)}`);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message, error: body.error };
+      }
+      return { success: true, message: body.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Delete failed',
+      };
+    }
+  },
+
+  getAdminTickets: async () => {
+    try {
+      const { data: body } = await api.get('/admin/tickets');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      return { success: true, data: Array.isArray(raw) ? raw : [] };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load tickets',
+      };
+    }
+  },
+
+  patchAdminTicketStatus: async (ticketId, status) => {
+    try {
+      const { data: body } = await api.patch(
+        `/admin/tickets/${encodeURIComponent(ticketId)}/status`,
+        { status }
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message };
+      }
+      return { success: true, message: body.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
+      };
+    }
+  },
+
+  getAdminServiceRequestsList: async () => {
+    try {
+      const { data: body } = await api.get('/admin/service-requests');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      return { success: true, data: Array.isArray(raw) ? raw : [] };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load requests',
+      };
+    }
+  },
+
+  patchAdminServiceRequest: async (requestId, patch) => {
+    try {
+      const { data: body } = await api.patch(
+        `/admin/service-requests/${encodeURIComponent(requestId)}`,
+        patch
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
       };
     }
   },

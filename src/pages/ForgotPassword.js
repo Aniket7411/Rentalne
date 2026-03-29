@@ -101,7 +101,13 @@ const ForgotPassword = () => {
             </>
           )}
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
+            <Link
+              to="/reset-password"
+              className="block text-sm text-primary-blue hover:text-primary-blue-light"
+            >
+              Already have a reset link? Enter new password
+            </Link>
             <Link
               to="/login"
               className="inline-flex items-center space-x-1 text-sm font-medium text-primary-blue hover:text-primary-blue-light"

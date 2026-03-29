@@ -15,6 +15,8 @@ This file was **generated from the actual backend code** in this project (`serve
 
 If a future deployment used a **different commit** of this backend, compare that commit’s `routes/` and `server.js` to this file in case an endpoint drifted.
 
+This document is maintained against the requirements in **`BACKEND_BRIEF_FOR_API_REFERENCE.md`** (single source of truth for the frontend rebuild).
+
 ---
 
 ## Technical summary
@@ -51,6 +53,46 @@ Generated from the codebase in this repo. Use **`/api`** as the path prefix unle
 
 - Amounts are in **INR** (rupees, 2 decimal places in API responses via `orderFormatter` / `money` utils).
 - Razorpay uses **paise** internally (amount × 100).
+
+### Environments
+
+| Environment | Example base URL |
+|---------------|-------------------|
+| Local | `http://localhost:5000/api` (default `PORT` from `process.env.PORT` or **5000** in `server.js`) |
+| Production | `https://<your-api-host>/api` — use the same host your frontend’s `NEXT_PUBLIC_API_URL` (or equivalent) targets. |
+
+No path prefix other than `/api` is defined in `server.js` unless you add a reverse proxy.
+
+### HTTP status vs JSON `success` field
+
+- Most errors use **4xx/5xx** with `success: false`.
+- **`GET /api/settings`:** on some failures the handler still returns **HTTP 200** with `success: true` and **default** discount values (see examples section) — not `success: false`.
+- **`GET .../refund-status`:** may return **200** with `success: true`, `data: null` and `message: "No refund found for this order"` when there is no refund record.
+- Prefer checking **HTTP status** first, then `success`, then `message` / `error`.
+
+### Rupees vs paise by endpoint (do not mix these up)
+
+| Endpoint | Body / field | Unit |
+|----------|----------------|------|
+| `POST /api/payments/create-order` | `amount` | **Rupees** (number, e.g. `8500` for ₹8500; validated against `finalTotal` or `advanceAmount`) |
+| `POST /api/payments/initiate` | `amount` | **Rupees** |
+| `POST /api/payments/calculate` | (per controller) | **Rupees** |
+| `POST /api/users/orders/:orderId/create-razorpay-order` | `amount` | **Paise** (integer, e.g. `850000` for ₹8500 — see `orderController.createRazorpayOrderForPendingOrder`) |
+| Order model / responses | `total`, `finalTotal`, `advanceAmount`, `remainingAmount`, item `price` | **Rupees** |
+| Razorpay Checkout / verify | `amount` on gateway is paise; verify sends gateway ids + signature | Gateway uses **paise** |
+
+### Catalog: `/api/acs` vs `/api/products` (canonical)
+
+- **Both are mounted and intentionally duplicate catalog behavior** for the same **Product** collection.
+- **`GET /api/acs`** and **`GET /api/acs/:id`** use `acController.getAllACs` / product-by-id style handlers (legacy path name).
+- **`GET /api/products`** and **`GET /api/products/:id`** use `productController.getProducts` / `getProductById`.
+- **For new frontend code, prefer `/api/products` and `/api/products/:id`** — clearer naming. Keeping `/api/acs` is for backward compatibility; responses are product-shaped.
+
+### Order list URL (important)
+
+- **There is no** `GET /api/users/orders` **without** a user id segment.
+- **List orders:** `GET /api/users/:userId/orders` with **`Authorization`** (user must match `:userId`, or admin).
+- **Single order:** `GET /api/users/orders/:orderId` **or** `GET /api/orders/:orderId` (same router; `:orderId` is Mongo `_id` **or** string `orderId`).
 
 ---
 
@@ -606,7 +648,10 @@ If DB read fails, server still returns **`200`** with the same keys and defaults
 
 ---
 
-### `GET /api/users/orders?page=1&limit=10&status=pending`
+### `GET /api/users/:userId/orders?page=1&limit=10&status=pending`
+
+**Example:** `GET /api/users/6732a1b2c3d4e5f678901234/orders?page=1&limit=10&status=pending`  
+(`:userId` must be the authenticated user’s id unless `role === 'admin'`.)
 
 **Response `200`**
 
@@ -633,7 +678,9 @@ If DB read fails, server still returns **`200`** with the same keys and defaults
 }
 ```
 
-**403** if `:userId` in path ≠ logged-in user (non-admin):  
+**Query params:** `status` (optional), `type` (`rental` | `service` | `all`), `page`, `limit`.
+
+**403** if `:userId` ≠ logged-in user (non-admin):  
 `{ "success": false, "message": "Not authorized to access these orders", "error": "FORBIDDEN" }`
 
 ---
@@ -1180,7 +1227,7 @@ Validation failures: **`400`** `{ "success": false, "message": "<first validator
 | POST | `/api/auth/verify-signup-otp` | No | Completes signup |
 | GET | `/api/users/profile` | User | Profile |
 | PATCH | `/api/users/profile` | User | Profile update |
-| GET | `/api/users/:userId/orders` | User | Same user or admin |
+| GET | `/api/users/:userId/orders` | User | **List** orders + `pagination`, query `status`, `type`, `page`, `limit` (must match token user unless admin) |
 | **Products** |
 | GET | `/api/products` | No | List + filters (see below) |
 | GET | `/api/products/:id` | No | Single product |
@@ -1197,13 +1244,13 @@ Validation failures: **`400`** `{ "success": false, "message": "<first validator
 | GET | `/api/wishlist/check/:productId` | User | |
 | DELETE | `/api/wishlist/:productId` | User | |
 | **Orders** (mounted at **`/api/users/orders`** and **`/api/orders`**) |
-| GET | `.../orders/:orderId` | User | Get one (accepts `_id` or `orderId` string) |
+| GET | `.../orders/:orderId` | User | Get one (accepts `_id` or `orderId` string) — **not** the list endpoint |
 | POST | `.../orders` | User | Create order |
 | PATCH | `.../orders/:orderId/cancel` | User **or** Admin | Body: `cancellationReason` (required) |
 | GET | `.../orders/:orderId/refund-status` | User **or** Admin | Cancelled + paid orders |
 | POST | `.../orders/:orderId/create-razorpay-order` | User | Retry payment (pending) |
 | POST | `.../orders/:orderId/verify-payment` | User | Verify Razorpay for pending order |
-| PATCH | `.../orders/:orderId/status` | **Admin** | Fulfillment status |
+| PATCH | `.../orders/:orderId/status` | **Admin** | Fulfillment status (same router; use **admin** JWT) |
 | **Payments** |
 | POST | `/api/payments/webhook/razorpay` | No | Raw body / signature (Razorpay) |
 | GET | `/api/payments/link` | User | Payment link helper |
@@ -1232,9 +1279,116 @@ Validation failures: **`400`** `{ "success": false, "message": "<first validator
 | GET | `/api/settings` | No | `instantPaymentDiscount`, `advancePaymentDiscount`, `advancePaymentAmount` |
 | GET | `/api/admin/settings` | Admin | + `updatedAt` |
 | PUT | `/api/admin/settings` | Admin | Partial update |
-| **Admin** (`/api/admin`) |
-| POST | `/api/admin/login` | No | **Separate** Admin model (not User) — email + password |
-| GET/POST/PATCH/DELETE | `/api/admin/acs`, `/api/admin/rental-inquiries`, … | See § Admin | Many routes use `auth` middleware in code — verify your deployed policy |
+| **Admin** (`/api/admin`) — *in `routes/admin.js`; several AC/rental/service routes use `auth` not `adminAuth` in source* |
+| POST | `/api/admin/login` | No | Admin collection login → `token` + `user` |
+| GET | `/api/admin/acs` | `auth` | List ACs (admin) |
+| POST | `/api/admin/acs` | `auth` | Create AC |
+| PATCH | `/api/admin/acs/:id` | `auth` | Update AC |
+| DELETE | `/api/admin/acs/:id` | `auth` | Delete AC |
+| GET | `/api/admin/rental-inquiries` | `auth` | List rental inquiries |
+| PATCH | `/api/admin/rental-inquiries/:inquiryId` | `auth` | Update inquiry |
+| GET | `/api/admin/vendor-requests` | `auth` | List vendor listing requests |
+| POST | `/api/admin/services` | `auth` | Create service |
+| PATCH | `/api/admin/services/:id` | `auth` | Update service |
+| DELETE | `/api/admin/services/:id` | `auth` | Delete service |
+| GET | `/api/admin/service-bookings` | `adminAuth` | List service bookings |
+| PATCH | `/api/admin/service-bookings/:leadId` | `adminAuth` | Update booking status |
+| GET | `/api/admin/products` | `adminAuth` | List products (admin) |
+| POST | `/api/admin/products` | `adminAuth` | Create product |
+| PATCH | `/api/admin/products/:id` | `adminAuth` | Update product |
+| DELETE | `/api/admin/products/:id` | `adminAuth` | Delete product |
+| GET | `/api/admin/orders` | `adminAuth` | List all orders |
+| PATCH | `/api/admin/orders/:orderId/status` | `adminAuth` | Order fulfillment status |
+| PATCH | `/api/admin/orders/:orderId/payment-status` | `adminAuth` | Manual payment update (e.g. pay-later marked paid) |
+| GET | `/api/admin/service-requests` | `adminAuth` | List service requests |
+| PATCH | `/api/admin/service-requests/:requestId` | `adminAuth` | Update service request |
+| GET | `/api/admin/tickets` | `adminAuth` | List tickets |
+| PATCH | `/api/admin/tickets/:ticketId/status` | `adminAuth` | Ticket status |
+| POST | `/api/admin/tickets/:ticketId/remarks` | `adminAuth` | Admin remark |
+| POST | `/api/admin/faqs` | `adminAuth` | Create FAQ |
+| PATCH | `/api/admin/faqs/:id` | `adminAuth` | Update FAQ |
+| DELETE | `/api/admin/faqs/:id` | `adminAuth` | Delete FAQ |
+| GET | `/api/admin/coupons` | `adminAuth` | List coupons |
+| GET | `/api/admin/coupons/:id` | `adminAuth` | One coupon |
+| POST | `/api/admin/coupons` | `adminAuth` | Create coupon |
+| PUT | `/api/admin/coupons/:couponId` | `adminAuth` | Update coupon |
+| DELETE | `/api/admin/coupons/:couponId` | `adminAuth` | Delete coupon |
+| GET | `/api/admin/coupons/:id/stats` | `adminAuth` | Usage stats |
+| GET | `/api/admin/leads` | `adminAuth` | List leads |
+| GET | `/api/admin/leads/stats` | `adminAuth` | Lead stats (**declare this route before** `GET /api/admin/leads/:id` in Express — already ordered in source) |
+| GET | `/api/admin/leads/:id` | `adminAuth` | One lead |
+| PATCH | `/api/admin/leads/:id` | `adminAuth` | Update lead |
+| DELETE | `/api/admin/leads/:id` | `adminAuth` | Delete lead |
+| GET | `/api/admin/users` | `adminAuth` | List users |
+| GET | `/api/admin/users/:userId` | `adminAuth` | One user |
+| GET | `/api/admin/users/:userId/orders` | `adminAuth` | User’s orders |
+| GET | `/api/admin/users/:userId/stats` | `adminAuth` | User stats |
+
+**Deprecated / not mounted:** `routes/rentalInquiries.js` exports an empty router — rental inquiries for users go through **`POST /api/acs/:id/inquiry`** and admin list above.
+
+---
+
+## End-to-end API sequences
+
+Use these **in order** when wiring flows.
+
+### A. Browse → product detail
+
+1. `GET /api/products?category=AC&page=1&limit=20` (or `GET /api/acs?category=AC` — same data model).
+2. `GET /api/products/6732b2c3d4e5f678901234abcd` for detail.
+
+### B. Optional: public settings before checkout UI
+
+1. `GET /api/settings` → use `instantPaymentDiscount`, `advancePaymentDiscount`, `advancePaymentAmount` for labels and advance ₹ amount.
+
+### C. Authenticated user — rental in cart → order → Razorpay (pay now)
+
+1. `POST /api/auth/login` or OTP flow → store `token`.
+2. `POST /api/users/cart/rentals` with `productId`, `quantity`, `paymentOption` (`payNow` or `payAdvance`).
+3. `GET /api/users/cart` to confirm line items.
+4. `POST /api/users/orders` (or `/api/orders`) with full `items`, `paymentOption: "payNow"`, totals, `customerInfo`, etc. → `201`, `data.order`, `paymentStatus` often **`pending`** until gateway completes.
+5. `POST /api/payments/create-order` with `{ "orderId": "ORD-2026-047", "amount": 8500 }` — **amount in rupees**, must match server expectation (`finalTotal` for pay now).
+6. Open Razorpay Checkout with `razorpayOrderId`, `key`, amount in **paise** on client (`order_amount` from gateway response / `amount * 100`).
+7. `POST /api/payments/verify` with `razorpay_order_id`, `razorpay_payment_id`, `razorpay_signature`, optional `paymentId` (`PAY-...`).
+8. `GET /api/users/orders/ORD-2026-047` (or Mongo `_id`) to refresh `paymentStatus: "paid"`, `status` may move toward `confirmed` per business logic.
+
+### D. Pay advance (rentals only)
+
+1. Same cart + `POST /api/users/orders` with `paymentOption: "payAdvance"` and server-calculated `advanceAmount` / `remainingAmount` in body as your app submits.
+2. `POST /api/payments/create-order` — **`amount` must be `advanceAmount` in rupees** (e.g. `500`), not full `finalTotal`.
+3. After verify, order may still show remaining balance for later collection — re-read order object fields.
+
+### E. Pay later
+
+1. `POST /api/users/orders` with `paymentOption: "payLater"` and appropriate `paymentStatus` (typically **`pending`**).
+2. **No** Razorpay `create-order` / `verify` required for the customer at checkout time.
+3. Admin may later `PATCH /api/admin/orders/:orderId/payment-status` to mark paid (manual/UPI/cash).
+
+### F. Pending order — retry payment (uses **paise**)
+
+1. `POST /api/users/orders/:orderId/create-razorpay-order` with `{ "amount": 850000 }` — **integer paise**.
+2. Complete checkout → `POST /api/users/orders/:orderId/verify-payment` (controller handles pending-order flow — align body with `orderController.verifyPaymentForPendingOrder`).
+
+### G. Cancel order + refund
+
+1. `PATCH /api/users/orders/:orderId/cancel` with `{ "cancellationReason": "..." }` (user or admin).
+2. If paid online, server may set `paymentStatus: "refunded"` and create refund record.
+3. `GET /api/users/orders/:orderId/refund-status` for dedicated refund object; or read `refundDisplayMessage` / `refund` on order from `GET` single order.
+
+---
+
+## Known cross-field quirks (read before implementing forms)
+
+| Topic | Detail |
+|--------|--------|
+| **Cart `POST .../cart/services`** | `cartController` requires `bookingDetails.addressType === "other"` (with contact fields), **not** `someoneElse`. |
+| **Cart schema** (`models/Cart.js`) | `bookingDetails.addressType` enum includes **`someoneElse`** — can appear in **GET cart** responses if old data saved that way; **new writes** should use **`other`** for service cart POST. |
+| **Service booking** (`POST /api/service-bookings`) | Validator uses **`myself`** / **`other`**; payment option **`payNow`** / **`payLater`** (not `payAdvance`). |
+| **ServiceBooking model** | Same: `addressType` `myself` \| `other`. |
+| **Vendor listing** | Validator requires **`businessName`**; `VendorListing` schema does **not** store it — still send it to pass validation. |
+| **Lead phone** | Must be exactly `+91` + 10 digits (`/^\+91[0-9]{10}$/`). |
+| **Admin route auth** | `routes/admin.js` uses **`auth`** for AC/rental/vendor/service mutations and **`adminAuth`** for most dashboard data — confirm production expects strong `adminAuth` everywhere before relying on weaker routes. |
+| **`updatePaymentStatus`** | Imported in `routes/orders.js` but **only mounted** as `PATCH /api/admin/orders/:orderId/payment-status`, not on user order router. |
 
 ---
 
@@ -1359,7 +1513,7 @@ Phone is normalized to 10 digits (strip leading `91`).
 
 **Responses:** orders are often passed through `formatOrderResponse` — includes rounded money and, for cancelled orders with refunds, **`refundDisplayMessage`**, **`refund`**, **`refundDetails`**, **`refundAmount`**, **`refundStatus`**.
 
-### List user orders (`GET /api/users/orders` or `GET /api/users/:userId/orders`)
+### List user orders (`GET /api/users/:userId/orders` only)
 
 **Query:** `status`, `type` (`rental` | `service` | `all`), `page`, `limit`.
 
@@ -1561,11 +1715,89 @@ For admin APIs that use `adminAuth`, the JWT must belong to a **`User` with `rol
 2. **Auth:** store JWT; send `Authorization: Bearer`.
 3. **User id:** responses use both `id` and `_id` — normalize in one place.
 4. **Orders:** support lookup by **`orderId` string** vs **`_id`** everywhere the backend does.
-5. **Razorpay:** `create-order` → checkout → `verify` with order id, payment id, signature (+ optional `paymentId`).
-6. **Refunds / cancel:** expect `refundDisplayMessage`, nested `refund` / `refundDetails` on formatted orders.
-7. **Settings:** drive pay-now / pay-advance UI from `GET /api/settings`.
-8. **Service categories:** match `SERVICE_CATEGORIES` exactly (case-sensitive).
-9. **Phone formats:** some forms want E.164 (`+919...`), leads want `+91` + 10 digits — follow each endpoint’s validation section above.
+5. **Order list URL:** must call `GET /api/users/<mongoUserId>/orders`, not `GET /api/users/orders`.
+6. **Razorpay:** `create-order` → checkout → `verify` with order id, payment id, signature (+ optional `paymentId`).
+7. **Refunds / cancel:** expect `refundDisplayMessage`, nested `refund` / `refundDetails` on formatted orders.
+8. **Settings:** drive pay-now / pay-advance UI from `GET /api/settings`.
+9. **Service categories:** match `SERVICE_CATEGORIES` exactly (case-sensitive).
+10. **Phone formats:** some forms want E.164 (`+919...`), leads want `+91` + 10 digits — follow each endpoint’s validation section above.
+11. **Money:** `POST .../payments/create-order` = **rupees**; `POST .../orders/:id/create-razorpay-order` (pending retry) = **paise**.
+
+---
+
+## curl examples (replace tokens and ids)
+
+```bash
+# Health
+curl -s http://localhost:5000/api/health
+
+# Public settings
+curl -s http://localhost:5000/api/settings
+
+# Login
+curl -s -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"you@example.com\",\"password\":\"yourpassword\"}"
+
+# Profile (paste JWT)
+curl -s http://localhost:5000/api/users/profile \
+  -H "Authorization: Bearer YOUR_JWT"
+
+# List products
+curl -s "http://localhost:5000/api/products?category=AC&page=1&limit=10"
+
+# User orders list — note :userId in path
+curl -s "http://localhost:5000/api/users/USER_MONGO_ID/orders?page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_JWT"
+
+# Single order by business orderId
+curl -s "http://localhost:5000/api/users/orders/ORD-2026-047" \
+  -H "Authorization: Bearer YOUR_JWT"
+
+# Create Razorpay order (amount in RUPEES)
+curl -s -X POST http://localhost:5000/api/payments/create-order \
+  -H "Authorization: Bearer YOUR_JWT" \
+  -H "Content-Type: application/json" \
+  -d "{\"orderId\":\"ORD-2026-047\",\"amount\":8500}"
+
+# Validate coupon
+curl -s -X POST http://localhost:5000/api/coupons/validate \
+  -H "Content-Type: application/json" \
+  -d "{\"code\":\"SUMMER24\",\"orderTotal\":10000}"
+```
+
+---
+
+## Test data appendix (non-secret placeholders)
+
+Use these only for **local/staging** smoke tests; create real rows via signup/admin if missing.
+
+| Item | Placeholder |
+|------|-------------|
+| User email/password | Whatever you created via `POST /api/auth/signup` |
+| User Mongo id | From login response `user._id` (24 hex chars) |
+| Admin | `POST /api/admin/login` with credentials from your `Admin` seed script — **not** the same as User admin unless you unified accounts |
+| Sample `productId` | Copy from `GET /api/products` → `data[0]._id` |
+| Sample `orderId` | From `POST /api/users/orders` response `data.orderId` |
+| Sample `paymentId` | From `POST /api/payments/create-order` → `data.paymentId` |
+
+---
+
+## Document version
+
+| | |
+|--|--|
+| **Backend git commit** | `a228c9591a0c754fae7c31b75a982f11410e9859` |
+| **Commit date** | 2025-11-26 (author timezone +0530) |
+| **Reference updated** | 2026-03-28 (documentation pass; aligns with `BACKEND_BRIEF_FOR_API_REFERENCE.md`) |
+
+If deployment differs from this commit, **diff `server.js` and `routes/`** against production before trusting this file.
+
+---
+
+### Note for maintainers
+
+This file satisfies the checklist in **`BACKEND_BRIEF_FOR_API_REFERENCE.md`**: global contract, full route index (including admin rows), frontend-critical examples, end-to-end sequences, quirks, curl samples, test appendix, and version footer. Optional **OpenAPI 3** (`openapi.yaml`) was not generated; add it in a follow-up if tooling is introduced.
 
 ---
 
