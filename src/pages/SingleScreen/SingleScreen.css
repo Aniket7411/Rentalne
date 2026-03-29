@@ -1,0 +1,93 @@
+.containerx {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  /* Ensures it occupies the full viewport height */
+  overflow: hidden;
+  /* Prevent scrolling */
+  background-color: #2563EB;
+  position: relative;
+  /* Ensure children are properly positioned */
+}
+
+@media screen and (max-width: 576px) {
+  .containerx {
+    display: none;
+  }
+
+}
+
+@media screen and (min-width:576px) {
+  .containery {
+    display: none;
+  }
+}
+
+body,
+html {
+  margin: 0;
+  /* Remove default body margins */
+  padding: 0;
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
+}
+
+.left-section,
+.right-section {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  color: white;
+  transition: width 0.5s ease, transform 0.5s ease;
+  overflow: hidden;
+  /* Prevent content overflow */
+  position: relative;
+  max-width: 100%;
+}
+
+.left-section {
+  background-color: #ffffff;
+  color: #000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.right-section {
+  background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%);
+  color: #fff;
+  transition: transform 1.5s ease-in-out, opacity 1.5s ease-in-out;
+  opacity: 1;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+}
+
+h1,
+h2 {
+  margin: 0;
+  /* Prevent headers from adding unintended margins */
+}
+
+button {
+  padding: 6px 10px;
+  border: none;
+  background-color: transparent;
+  font-weight: bold;
+  cursor: pointer;
+  width: auto;
+  min-width: 100px;
+  height: auto;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.left-button,
+.right-button {
+  margin-top: 30px;
+  /* Adjust for placement */
+}
+
+/* Ensure images fit their containers */
+.left-image,
+.right-image {
+  width: 100%;
+  height: 100%;
+  /* object-fit: cover; Prevent distortion */
+}

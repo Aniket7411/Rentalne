@@ -1,0 +1,531 @@
+{
+    "info": {
+        "name": "Rental Service API",
+        "_postman_id": "c2f3f8e0-0000-4000-8000-aaaaaaaaaaaa",
+        "description": "Postman collection for AC Rental & Services API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Auth - Admin Login",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Catalog - List ACs",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/acs",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "acs"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Catalog - Get AC by ID",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/acs/{{acId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "acs",
+                        "{{acId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Catalog - Create Rental Inquiry",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"acId\": \"{{acId}}\",\n  \"name\": \"Test\",\n  \"email\": \"t@e.co\",\n  \"phone\": \"+919999999999\",\n  \"duration\": \"Monthly\",\n  \"message\": \"Need ASAP\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/acs/{{acId}}/inquiry",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "acs",
+                        "{{acId}}",
+                        "inquiry"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Services - List",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/services",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "services"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Services - Create Booking",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"name\": \"Test\",\n  \"phone\": \"+919999999999\",\n  \"preferredDate\": \"2025-11-30\",\n  \"preferredTime\": \"10:00\",\n  \"address\": \"Test address\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/service-bookings",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "service-bookings"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Public - Create Lead",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"name\": \"Lead\",\n  \"phone\": \"+919999999999\",\n  \"message\": \"Call me\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/leads",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "leads"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Public - Contact",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"name\": \"A\",\n  \"email\": \"a@b.co\",\n  \"phone\": \"+919999999999\",\n  \"message\": \"Hi\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/contact",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "contact"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Public - Vendor Listing Request",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"name\": \"Vendor\",\n  \"phone\": \"+919999999999\",\n  \"businessName\": \"Cool Air\",\n  \"message\": \"Onboard\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/vendor-listing-request",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "vendor-listing-request"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - List ACs",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/admin/acs",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "acs"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Add AC",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"brand\": \"LG\",\n  \"model\": \"X\",\n  \"capacity\": \"1.5 Ton\",\n  \"type\": \"Split\",\n  \"description\": \"Test\",\n  \"location\": \"Mumbai\",\n  \"status\": \"Available\",\n  \"price\": {\"monthly\":1000,\"quarterly\":2500,\"yearly\":9000},\n  \"images\": []\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/acs",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "acs"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Update AC",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"status\": \"Rented Out\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/acs/{{acId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "acs",
+                        "{{acId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Delete AC",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/admin/acs/{{acId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "acs",
+                        "{{acId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - List Service Bookings (Leads)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/admin/service-bookings",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "service-bookings"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Update Lead Status",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"status\": \"Contacted\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/service-bookings/{{leadId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "service-bookings",
+                        "{{leadId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - List Rental Inquiries",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/admin/rental-inquiries",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "rental-inquiries"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Update Inquiry Status",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"status\": \"Resolved\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/rental-inquiries/{{inquiryId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "rental-inquiries",
+                        "{{inquiryId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Add Service",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"title\": \"Deep Clean\",\n  \"description\": \"Full deep clean\",\n  \"price\": 999\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/services",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "services"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Update Service",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"price\": 799\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/admin/services/{{serviceId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "services",
+                        "{{serviceId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Admin - Delete Service",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/admin/services/{{serviceId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "admin",
+                        "services",
+                        "{{serviceId}}"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000/api"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "acId",
+            "value": "123"
+        },
+        {
+            "key": "serviceId",
+            "value": "svc1"
+        },
+        {
+            "key": "leadId",
+            "value": "lead1"
+        },
+        {
+            "key": "inquiryId",
+            "value": "inq1"
+        }
+    ]
+}
