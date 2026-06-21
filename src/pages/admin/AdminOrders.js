@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../../services/api';
 import {
   Loader2, RefreshCw, X, ChevronRight, Package, Wrench,
-  IndianRupee, Calendar, Phone, User, MapPin, CreditCard, CheckCircle2,
+  Calendar, Phone, User, MapPin, CreditCard, CheckCircle2,
   Clock, AlertCircle, Ban, Truck, Home, Hammer
 } from 'lucide-react';
 

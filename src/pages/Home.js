@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Star, Snowflake, Wrench, Clock, Loader2, Shield, Zap, Users } from 'lucide-react';
+import { ArrowRight, Star, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import ACCard from '../components/ACCard';
 import ServiceCard from '../components/ServiceCard';
 import ServiceBookingModal from '../components/ServiceBookingModal';
 import SingleScreen from './SingleScreen/SingleScreen';
-import InstallCard from '../components/installcard';
-import { browsePath, BROWSE_CATEGORY, defaultBrowsePath } from '../utils/browseUrls';
+import { browsePath, BROWSE_CATEGORY } from '../utils/browseUrls';
 
 const brands = [
   { src: '/blustarlogo.png', alt: 'Blue Star' },
@@ -21,7 +19,7 @@ const brands = [
 ];
 
 const Home = () => {
-  const [featuredACs, setFeaturedACs] = useState([]);
+  const [, setFeaturedACs] = useState([]);
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
@@ -80,11 +78,6 @@ const Home = () => {
     }
   };
 
-  const steps = [
-    { icon: '🔍', title: 'Browse', description: 'Search through our wide selection of ACs' },
-    { icon: '✅', title: 'Select & Inquire', description: 'Choose your preferred AC and contact the vendor' },
-    { icon: '🏠', title: 'Get Installed', description: 'Get your AC installed and enjoy cool comfort' },
-  ];
 
   const testimonials = [
     {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../../services/api';
-import { Phone, MapPin, Calendar, AlertCircle, ShoppingBag, Wrench, Store, Loader2, CheckCircle, Mail, PhoneCall, Trash2 } from 'lucide-react';
+import { Phone, MapPin, Calendar, AlertCircle, ShoppingBag, Wrench, Store, Loader2, PhoneCall, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/Toast';

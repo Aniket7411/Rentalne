@@ -148,6 +148,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     loadProduct();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, productType]);
 
   useEffect(() => {
@@ -158,6 +159,7 @@ const ProductDetail = () => {
       setTenureIndex(idx >= 0 ? idx : 0);
       loadRelated(product);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
   const getBrowseRoute = () => browsePath(slugToCategoryParam(productType));

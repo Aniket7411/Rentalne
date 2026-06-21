@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import { Plus, Edit2, Trash2, Eye, Loader2, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,7 +7,6 @@ import { ToastContainer } from '../../components/Toast';
 import uploadFileToCloudinary from '../../utils/cloudinary';
 
 const ManageServices = () => {
-  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);

@@ -22,7 +22,7 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const { success: showSuccess, error: showError } = useToast();
+  const { error: showError } = useToast();
 
   const timeSlots = [
     { label: '9:00 AM - 10:00 AM', value: '9-10' },

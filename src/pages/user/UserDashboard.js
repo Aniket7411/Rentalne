@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
 import {
-  ShoppingBag, Wrench, Clock, CheckCircle, XCircle,
-  Edit2, Save, X, MapPin, Phone, Heart, Star,
-  AlertCircle, MessageSquare, Package, User as UserIcon,
+  ShoppingBag, Wrench, CheckCircle,
+  Edit2, Save, X, Heart, Star,
+  AlertCircle, MessageSquare,
   CalendarCheck, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -83,6 +83,7 @@ const UserDashboard = () => {
       return;
     }
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadData = async () => {

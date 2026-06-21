@@ -107,6 +107,7 @@ const BrowseACs = () => {
         clearTimeout(modalTimerRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productType, searchParams]);
 
   useEffect(() => {
@@ -115,6 +116,7 @@ const BrowseACs = () => {
     }, 500);
 
     return () => clearTimeout(debounceTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, productType, searchParams]);
 
   const loadProducts = async () => {
@@ -206,6 +208,7 @@ const BrowseACs = () => {
     if (categoryFromUrl) return new Set([categoryFromUrl]);
     if (categoriesFromUrl) return new Set(categoriesFromUrl.split(',').map((s) => s.trim()));
     return new Set(allCatValues);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryFromUrl, categoriesFromUrl]);
 
   const getFilterOptions = () => {

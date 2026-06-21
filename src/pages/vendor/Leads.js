@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/dummyData';
-import { Phone, Mail, MapPin, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Phone, MapPin, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Leads = () => {
@@ -12,6 +12,7 @@ const Leads = () => {
 
   useEffect(() => {
     loadLeads();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadLeads = async () => {

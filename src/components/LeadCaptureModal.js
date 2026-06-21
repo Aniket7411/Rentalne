@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Phone, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, User } from 'lucide-react';
 import { apiService } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatPhoneNumber, getFormattedPhone, validatePhoneNumber } from '../utils/phoneFormatter';

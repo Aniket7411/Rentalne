@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
-import { Mail, AlertCircle, Shield, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, AlertCircle, Shield, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const AdminLogin = () => {

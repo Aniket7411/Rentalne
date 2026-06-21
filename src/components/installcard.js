@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Home, Users, Wrench, ArrowRight } from 'lucide-react';
+import { CheckCircle, Users, Wrench, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { defaultBrowsePath } from '../utils/browseUrls';
 

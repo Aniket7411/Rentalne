@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import {
   Loader2,
@@ -110,7 +109,6 @@ function matchesTab(service, tab) {
 }
 
 const ServiceRequest = () => {
-  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -121,6 +119,7 @@ const ServiceRequest = () => {
 
   useEffect(() => {
     loadServices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadServices = async () => {

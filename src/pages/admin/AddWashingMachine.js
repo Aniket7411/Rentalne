@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import { uploadMultipleFilesToCloudinary } from '../../utils/cloudinary';
-import { Upload, AlertCircle, CheckCircle, X, Loader2 } from 'lucide-react';
+import { Upload, AlertCircle, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/Toast';
@@ -35,7 +35,7 @@ const AddWashingMachine = () => {
     const [imagePreviews, setImagePreviews] = useState([]);
     const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
+    const [, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploadingImages, setUploadingImages] = useState(false);
     const { toasts, removeToast, success: showSuccess, error: showError } = useToast();
