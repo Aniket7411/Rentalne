@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  API_URL: 'http://localhost:5000/api'
+  API_URL: 'https://rental-backend-new.onrender.com/api'
 };

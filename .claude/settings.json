@@ -5,7 +5,8 @@
       "Read(//c/Users/sharm/OneDrive/Desktop/Rental-backend-new/**)",
       "Bash(npx update-browserslist-db@latest --yes)",
       "Bash(npm i *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(git add *)"
     ]
   }
 }
