@@ -26,15 +26,15 @@ function SingleScreen() {
   return (
     <div
       ref={bannerRef}
-      className="flex flex-col sm:flex-row w-full"
-      style={{ height: "90vh", minHeight: 400 }}
+      className="flex flex-row w-full"
+      style={{ height: "90vh", minHeight: 320 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* Left Panel — Rent */}
       <div
         className="group relative overflow-hidden"
-        style={{ flex: leftFlex, minHeight: "50vh", transition: PANEL_TRANSITION }}
+        style={{ flex: leftFlex, transition: PANEL_TRANSITION }}
       >
         <img
           src="/bannerleftimage.png"
@@ -42,11 +42,11 @@ function SingleScreen() {
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-center px-10 sm:px-16 lg:px-20 py-10 z-10">
+        <div className="absolute inset-0 flex flex-col justify-center px-3 sm:px-10 lg:px-20 py-6 z-10">
           <h1
-            className="text-white font-extrabold leading-tight mb-4"
+            className="text-white font-extrabold leading-tight mb-3 sm:mb-4"
             style={{
-              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontSize: "clamp(0.9rem, 4.5vw, 3.25rem)",
               textShadow: "0 2px 10px rgba(0,0,0,0.85), 0 0 32px rgba(14,165,233,0.5)",
             }}
           >
@@ -67,7 +67,7 @@ function SingleScreen() {
       {/* Right Panel — Service */}
       <div
         className="group relative overflow-hidden"
-        style={{ flex: rightFlex, minHeight: "50vh", transition: PANEL_TRANSITION }}
+        style={{ flex: rightFlex, transition: PANEL_TRANSITION }}
       >
         <img
           src="/bannerright.png"
@@ -75,11 +75,11 @@ function SingleScreen() {
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-center items-start lg:items-end px-10 sm:px-16 lg:px-20 py-10 z-10 text-left lg:text-right">
+        <div className="absolute inset-0 flex flex-col justify-center items-start lg:items-end px-3 sm:px-10 lg:px-20 py-6 z-10 text-left lg:text-right">
           <h1
-            className="text-white font-extrabold leading-tight mb-4"
+            className="text-white font-extrabold leading-tight mb-3 sm:mb-4"
             style={{
-              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontSize: "clamp(0.9rem, 4.5vw, 3.25rem)",
               textShadow: "0 2px 10px rgba(0,0,0,0.85), 0 0 32px rgba(14,165,233,0.5)",
             }}
           >

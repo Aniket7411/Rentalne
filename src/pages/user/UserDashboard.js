@@ -780,7 +780,11 @@ const UserDashboard = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-text-light">No reviews yet. <Link to="/orders" className="text-primary-blue">Review your orders</Link></p>
+              <p className="text-text-light">No reviews yet.{' '}
+                <button type="button" onClick={() => setActiveTab('orders')} className="text-primary-blue underline">
+                  View your orders
+                </button>
+              </p>
             )}
           </div>
         )}
