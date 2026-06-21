@@ -525,7 +525,7 @@ const BrowseACs = () => {
             )}
 
             {/* Mobile category chips */}
-            <div className="flex lg:hidden gap-2 overflow-x-auto pb-1 mb-3 no-scrollbar">
+            <div className="flex lg:hidden gap-2 overflow-x-auto mb-3 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
               {categoryDefinitions.map(({ slug, label, Icon }) => {
                 const active = selectedCatSet.has(slugToCategoryParam(slug));
                 return (
