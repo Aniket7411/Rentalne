@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(ls -la \"C:\\\\Users\\\\sharm\\\\OneDrive\\\\Desktop\\\\Rental-backend-new\\\\routes\")",
-      "Read(//c/Users/sharm/OneDrive/Desktop/Rental-backend-new/**)"
+      "Read(//c/Users/sharm/OneDrive/Desktop/Rental-backend-new/**)",
+      "Bash(npx update-browserslist-db@latest --yes)",
+      "Bash(npm i *)"
     ]
   }
 }
