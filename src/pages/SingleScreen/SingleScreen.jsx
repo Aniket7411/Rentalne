@@ -41,6 +41,7 @@ function SingleScreen() {
           alt="Rent appliances"
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
+        <div className="absolute inset-0 bg-black/20" />
         <div className="absolute inset-0 flex flex-col justify-center px-10 sm:px-16 lg:px-20 py-10 z-10">
           <h1
             className="text-white font-extrabold leading-tight mb-4"
