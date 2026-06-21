@@ -231,10 +231,11 @@ const Home = () => {
               style={{ flex: 1, minWidth: 0 }}
             >
               <Link to={browsePath(BROWSE_CATEGORY.REFRIGERATOR)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                <div className="relative h-44 sm:h-52 md:h-56">
+                <div className="relative h-52 sm:h-56 md:h-64">
                   <motion.img
                     src="/refrigeratorneww.png" alt="Refrigerators"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    style={{ objectPosition: 'center top' }}
                     initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
                   />
                   <div className="absolute bottom-0 left-0 p-4 text-white">
@@ -278,10 +279,11 @@ const Home = () => {
               style={{ flex: 0.5 + cursorRatio, minWidth: 0, transition: 'flex 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' }}
             >
               <Link to={browsePath(BROWSE_CATEGORY.WASHING_MACHINE)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                <div className="relative h-44 sm:h-52 md:h-56">
+                <div className="relative h-52 sm:h-56 md:h-64">
                   <motion.img
                     src="/washingmahineee.png" alt="Washing Machines"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    style={{ objectPosition: 'center top' }}
                     initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
                   />
                   <div className="absolute bottom-0 left-0 p-4 text-white">
