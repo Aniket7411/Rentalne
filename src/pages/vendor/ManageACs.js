@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/dummyData';
-import { Edit, Trash2, Eye, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Edit, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ManageACs = () => {
@@ -14,6 +14,7 @@ const ManageACs = () => {
 
   useEffect(() => {
     loadACs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadACs = async () => {

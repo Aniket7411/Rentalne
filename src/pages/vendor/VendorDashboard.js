@@ -17,6 +17,7 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     loadStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadStats = async () => {
