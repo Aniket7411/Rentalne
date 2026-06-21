@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import ScrollToTop from './components/ScrollToTop';
 import Footer from './components/Footer';
+import HelpWidget from './components/HelpWidget';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Public Pages
@@ -23,6 +24,7 @@ import FaqPage from './pages/FaqPage';
 // Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AddProduct from './pages/admin/AddProduct';
 import AddAC from './pages/admin/AddAC';
 import AddWashingMachine from './pages/admin/AddWashingMachine';
 import AddRefrigerator from './pages/admin/AddRefrigerator';
@@ -36,6 +38,7 @@ import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminFaqs from './pages/admin/AdminFaqs';
 import AdminTickets from './pages/admin/AdminTickets';
 import AdminServiceRequests from './pages/admin/AdminServiceRequests';
+import AdminUsers from './pages/admin/AdminUsers';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorAddAC from './pages/vendor/AddAC';
 import VendorManageACs from './pages/vendor/ManageACs';
@@ -149,6 +152,14 @@ function App() {
                 }
               />
               <Route
+                path="/admin/add-product"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AddProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/add-ac"
                 element={
                   <ProtectedRoute requireAdmin={true}>
@@ -252,9 +263,18 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </main>
           <Footer />
+          <HelpWidget />
         </div>
         </CartProvider>
       </Router>

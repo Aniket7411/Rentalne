@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, MapPin, User, CreditCard, Edit2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, CreditCard, Edit2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { formatPhoneNumber, getFormattedPhone, validatePhoneNumber } from '../utils/phoneFormatter';
 import { useToast } from '../hooks/useToast';
 import { Loader2 } from 'lucide-react';
 import SuccessModal from './SuccessModal';
 
 const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     date: '',
@@ -76,14 +78,11 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
 
     setIsSubmitting(true);
     try {
-      const isPayLater = formData.paymentOption === 'payLater';
       const bookingData = {
         serviceId: service._id || service.id,
         serviceTitle: service.title,
         servicePrice: service.price,
-        // Always send a name
         name: formData.contactName,
-        // Backend requires a 'phone' field (E.164 handled by formatter)
         phone: getFormattedPhone(formData.contactPhone),
         date: formData.date,
         time: formData.time,
@@ -93,22 +92,10 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
         contactPhone: getFormattedPhone(formData.contactPhone),
         paymentOption: formData.paymentOption,
       };
-
-      // For 'Pay After Service', show success immediately for a snappier UX,
-      // and attempt the submit in the background. For 'Pay Now', wait for submit.
-      if (isPayLater) {
-        setSuccessOpen(true);
-        try {
-          await onSubmit(bookingData);
-        } catch (e) {
-          // Swallow errors here since user already saw success; backend can reconcile.
-        }
-      } else {
-        await onSubmit(bookingData);
-        setSuccessOpen(true);
-      }
+      await onSubmit(bookingData);
+      setSuccessOpen(true);
     } catch (error) {
-      showError('Failed to submit booking. Please try again.');
+      showError(error?.message || 'Failed to add to cart. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -512,16 +499,16 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex items-center space-x-2 px-3 w-auto py-1 bg-sky-500 text-white rounded-lg hover:bg-sky-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 px-4 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
+                    Adding...
                   </>
                 ) : (
                   <>
-                    Submit Booking
+                    Add to Cart
                     <Check className="w-4 h-4" />
                   </>
                 )}
@@ -533,13 +520,14 @@ const ServiceBookingModal = ({ service, isOpen, onClose, onSubmit }) => {
         {/* Success modal */}
         <SuccessModal
           isOpen={successOpen}
-          title="Booking confirmed"
-          message="You will get a call from us very soon."
+          title="Added to cart!"
+          message="Your service booking has been added to cart. Go to cart to complete your order."
           onClose={() => {
             setSuccessOpen(false);
             handleClose();
+            navigate('/cart');
           }}
-          confirmText="Great"
+          confirmText="Go to Cart"
         />
       </div>
     </AnimatePresence>

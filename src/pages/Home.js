@@ -10,12 +10,23 @@ import SingleScreen from './SingleScreen/SingleScreen';
 import InstallCard from '../components/installcard';
 import { browsePath, BROWSE_CATEGORY, defaultBrowsePath } from '../utils/browseUrls';
 
+const brands = [
+  { src: '/blustarlogo.png', alt: 'Blue Star' },
+  { src: '/daikinlogo.png', alt: 'Daikin' },
+  { src: '/samsung.png', alt: 'Samsung' },
+  { src: '/hitachilogo.png', alt: 'Hitachi' },
+  { src: '/whirlphoollogo.png', alt: 'Whirlpool' },
+  { src: '/voltaslogo.png', alt: 'Voltas' },
+  { src: '/carrierlogo.png', alt: 'Carrier' },
+];
+
 const Home = () => {
   const [featuredACs, setFeaturedACs] = useState([]);
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [brandsPaused, setBrandsPaused] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -93,8 +104,52 @@ const Home = () => {
         <SingleScreen />
       </div>
 
-      {/* Product Categories */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-white to-gray-50">
+      {/* Brand Logos Infinite Carousel */}
+      <style>{`
+        @keyframes brandScroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .brand-track {
+          animation: brandScroll 22s linear infinite;
+        }
+      `}</style>
+      <section className="py-8 sm:py-10 bg-white border-t border-b border-gray-100">
+        <div className="text-center mb-6 px-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Brands We Work With</h2>
+        </div>
+        <div
+          className="overflow-hidden cursor-pointer"
+          onMouseEnter={() => setBrandsPaused(true)}
+          onMouseLeave={() => setBrandsPaused(false)}
+        >
+          <div
+            className="brand-track flex items-center"
+            style={{
+              width: 'max-content',
+              animationPlayState: brandsPaused ? 'paused' : 'running',
+              gap: '3rem',
+            }}
+          >
+            {[...brands, ...brands].map((brand, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 flex items-center justify-center px-4 sm:px-6"
+              >
+                <img
+                  src={brand.src}
+                  alt={brand.alt}
+                  className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-all duration-300"
+                  style={{ maxWidth: '120px' }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Appliances on Rent */}
+      <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -103,93 +158,131 @@ const Home = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-8 md:mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-dark mb-2">Our Products</h2>
-            <p className="text-sm sm:text-base text-text-light">Choose from our wide range of rental appliances</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">Appliances on rent</h2>
+            <p className="text-sm sm:text-base text-gray-500">Checkout our huge collection of appliances on rent</p>
           </motion.div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {/* AC Category */}
+
+            {/* ── Air Conditioners ── */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
+              className="flex flex-col gap-3"
             >
-              <Link to={browsePath(BROWSE_CATEGORY.AC)}>
-                <div className="relative h-64 md:h-80 bg-gradient-to-br from-blue-100 to-blue-200">
-                  <img
-                    src="/Ac.png"
-                    alt="Air Conditioners"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=800&q=80';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-2">Air Conditioners</h3>
-                    <p className="text-blue-100">Cool comfort for your home</p>
+              {/* Main hero card */}
+              <Link to={browsePath(BROWSE_CATEGORY.AC)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                <div className="relative h-44 sm:h-52 md:h-56">
+                  <img src="/acnewimage.jpeg" alt="Air Conditioners" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-4 text-white">
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Air Conditioners</h3>
+                    <p className="text-xs text-gray-200 mb-2">Stay cool &amp; comfortable</p>
+                    <ArrowRight className="w-5 h-5" />
                   </div>
-                  <div className="absolute inset-0 border-4 border-transparent group-hover:border-primary-blue transition-all duration-300 rounded-2xl" />
                 </div>
               </Link>
+              {/* Subcategory cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <Link to={`${browsePath(BROWSE_CATEGORY.AC)}&type=Split`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/splitacnew.png" alt="Split AC" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Split AC</span>
+                  </div>
+                </Link>
+                <Link to={`${browsePath(BROWSE_CATEGORY.AC)}&type=Window`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/windowacnew.png" alt="Window AC" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Window AC</span>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
 
-            {/* Washing Machine Category */}
+            {/* ── Refrigerators ── */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
+              className="flex flex-col gap-3"
             >
-              <Link to={browsePath(BROWSE_CATEGORY.WASHING_MACHINE)}>
-                <div className="relative h-64 md:h-80 bg-gradient-to-br from-purple-100 to-purple-200">
-                  <img
-                    src="https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&q=80"
-                    alt="Washing Machines"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-2">Washing Machines</h3>
-                    <p className="text-purple-100">Clean clothes, hassle-free</p>
+              <Link to={browsePath(BROWSE_CATEGORY.REFRIGERATOR)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                <div className="relative h-44 sm:h-52 md:h-56">
+                  <img src="/refrigeratorneww.png" alt="Refrigerators" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-4 text-white">
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Refrigerators</h3>
+                    <p className="text-xs text-gray-200 mb-2">Fresh storage solutions</p>
+                    <ArrowRight className="w-5 h-5" />
                   </div>
-                  <div className="absolute inset-0 border-4 border-transparent group-hover:border-primary-blue transition-all duration-300 rounded-2xl" />
                 </div>
               </Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Link to={`${browsePath(BROWSE_CATEGORY.REFRIGERATOR)}&type=Single+Door`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/singledoor.jfif" alt="Single Door" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Single Door</span>
+                  </div>
+                </Link>
+                <Link to={`${browsePath(BROWSE_CATEGORY.REFRIGERATOR)}&type=Double+Door`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/doublerefridgenew.png" alt="Double Door" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Double Door</span>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
 
-            {/* Refrigerator Category */}
+            {/* ── Washing Machines ── */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
+              className="flex flex-col gap-3"
             >
-              <Link to={browsePath(BROWSE_CATEGORY.REFRIGERATOR)}>
-                <div className="relative h-64 md:h-80 bg-gradient-to-br from-green-100 to-green-200">
-                  <img
-                    src="https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=800&q=80"
-                    alt="Refrigerators"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-2">Refrigerators</h3>
-                    <p className="text-green-100">Keep your food fresh</p>
+              <Link to={browsePath(BROWSE_CATEGORY.WASHING_MACHINE)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
+                <div className="relative h-44 sm:h-52 md:h-56">
+                  <img src="/washingmahineee.png" alt="Washing Machines" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-4 text-white">
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Washing Machines</h3>
+                    <p className="text-xs text-gray-200 mb-2">Clean clothes effortlessly</p>
+                    <ArrowRight className="w-5 h-5" />
                   </div>
-                  <div className="absolute inset-0 border-4 border-transparent group-hover:border-primary-blue transition-all duration-300 rounded-2xl" />
                 </div>
               </Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Link to={`${browsePath(BROWSE_CATEGORY.WASHING_MACHINE)}&type=Automatic`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/fullywashingnew.png" alt="Fully Automatic" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Fully Automatic</span>
+                  </div>
+                </Link>
+                <Link to={`${browsePath(BROWSE_CATEGORY.WASHING_MACHINE)}&type=Semi+automatic`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
+                  <div className="relative h-24 sm:h-28">
+                    <img src="/semiwahingnew.png" alt="Semi-Automatic" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Semi-Automatic</span>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
+
           </div>
         </div>
       </section>
 
       {/* Featured ACs */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-white to-gray-50">
+      {/* <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -216,35 +309,84 @@ const Home = () => {
             ))}
           </div>
         </div>
+      </section> */}
+
+
+      {/* <InstallCard /> */}
+
+
+
+
+
+      {/* Why Mumbai Trusts ASH Enterprises */}
+      <section className="py-12 sm:py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 text-center mb-8 md:mb-12"
+          >
+            Why Mumbai Trusts ASH Enterprises
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {[
+              {
+                title: 'Zero Hidden Costs',
+                desc: 'Fixed prices. You pay exactly what you see. ₹149 for visits, ₹449 for service. No surprises.',
+                bg: 'bg-blue-50',
+              },
+              {
+                title: 'Free Maintenance on Rentals',
+                desc: 'Renting? If it stops cooling, we fix or replace it within 24 hours for free.',
+                bg: 'bg-cyan-50',
+              },
+              {
+                title: 'Lab-Grade Hygiene',
+                desc: 'We use industrial Foam Wash technology to remove 99.9% of hidden dust and mold.',
+                bg: 'bg-purple-50',
+              },
+              {
+                title: 'Same-Day Service',
+                desc: 'We prioritize breakdowns. Our tech-enabled dispatch gets an expert to you fast.',
+                bg: 'bg-yellow-50',
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`${item.bg} rounded-2xl p-6 shadow-sm`}
+              >
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
-
-      <InstallCard />
-
-
-
-
-
       {/* Services Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-gray-50 to-white">
+      <section className="pt-12 sm:pt-16 pb-4 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12"
+            className="text-center mb-8 md:mb-12"
           >
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-2">AC Repair & Maintenance Services</h2>
-              <p className="text-text-light">Professional AC services at your doorstep</p>
-            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">AC Repair &amp; Maintenance Services</h2>
+            <p className="text-gray-500 mb-4">Professional AC services at your doorstep</p>
             <Link
               to="/service-request"
-              className="mt-4 sm:mt-0 text-primary-blue hover:text-primary-blue-light flex items-center space-x-2 font-semibold group transition-all"
+              className="inline-flex items-center gap-2 text-primary-blue hover:text-primary-blue-light font-semibold group transition-all"
             >
               <span>View All Services</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
 
@@ -252,36 +394,61 @@ const Home = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary-blue" />
             </div>
-          ) : services.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services.map((service, index) => (
-                <motion.div
-                  key={service._id || service.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <ServiceCard service={service} onAddClick={handleServiceAdd} />
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No services available at the moment</p>
-              <Link
-                to="/service-request"
-                className="inline-block mt-4 text-primary-blue hover:text-primary-blue-light"
-              >
-                View All Services
-              </Link>
-            </div>
-          )}
+          ) : (() => {
+            const fallbackServices = [
+              {
+                _id: 'fb1',
+                title: 'AC Gas Refill',
+                description: 'Recharge your AC with the correct refrigerant gas for optimal cooling performance.',
+                price: 999,
+                originalPrice: 1299,
+                badge: 'Most Booked',
+                features: ['Refrigerant top-up', 'Leak check included', 'Cooling test after refill'],
+                image: null,
+              },
+              {
+                _id: 'fb2',
+                title: 'AC Deep Cleaning (Foam Wash)',
+                description: 'Industrial-grade foam wash that removes 99.9% of hidden dust, mold and bacteria.',
+                price: 599,
+                originalPrice: 799,
+                badge: 'Visit Within 1 Hour',
+                features: ['Filter & coil deep clean', 'Foam wash technology', 'Improves air quality'],
+                image: null,
+              },
+              {
+                _id: 'fb3',
+                title: 'AC Service & Checkup',
+                description: 'Full diagnostic service to ensure your AC runs smoothly and efficiently.',
+                price: 449,
+                originalPrice: null,
+                badge: null,
+                features: ['20-point inspection', 'Electrical check', 'Performance report'],
+                image: null,
+              },
+            ];
+            const displayServices = services.length > 0 ? services : fallbackServices;
+            return (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 items-stretch">
+                {displayServices.map((service, index) => (
+                  <motion.div className="flex w-full"
+                    key={service._id || service.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <ServiceCard service={service} onAddClick={handleServiceAdd} />
+                  </motion.div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-12 md:py-16 bg-white">
+      {/* <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -333,7 +500,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Service Booking Modal */}
       {selectedService && showBookingModal && (
@@ -349,7 +516,7 @@ const Home = () => {
       )}
 
       {/* Testimonials */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-white via-gray-50 to-white">
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-white via-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

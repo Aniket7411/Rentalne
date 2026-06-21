@@ -4,7 +4,7 @@ import { Target, Eye, Users, Award } from 'lucide-react';
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-background-light py-12">
+    <div className="min-h-screen bg-background-light pt-4 pb-12 sm:pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <motion.div

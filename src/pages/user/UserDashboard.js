@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
-import { 
-  ShoppingBag, Wrench, Clock, CheckCircle, XCircle, 
-  Edit2, Save, X, MapPin, Phone, Heart, Star, 
-  AlertCircle, MessageSquare, Package, User as UserIcon
+import {
+  ShoppingBag, Wrench, Clock, CheckCircle, XCircle,
+  Edit2, Save, X, MapPin, Phone, Heart, Star,
+  AlertCircle, MessageSquare, Package, User as UserIcon,
+  CalendarCheck, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { formatPhoneNumber, getFormattedPhone, validatePhoneNumber } from '../../utils/phoneFormatter';
+import { formatPhoneNumber } from '../../utils/phoneFormatter';
 import { defaultBrowsePath } from '../../utils/browseUrls';
 
 /** Map API order shape to UI rows previously built for "rentals". */
@@ -53,11 +54,16 @@ const UserDashboard = () => {
     phone: user?.phone || '',
     alternatePhone: user?.alternatePhone || '',
     address: user?.address || '',
+    pincode: '',
+    nearLandmark: '',
   });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
 
   // Dashboard data
   const [rentals, setRentals] = useState([]);
   const [serviceRequests, setServiceRequests] = useState([]);
+  const [serviceBookings, setServiceBookings] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [issues, setIssues] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -88,15 +94,19 @@ const UserDashboard = () => {
       const profileRes = await apiService.getUserProfile();
       if (profileRes.success) {
         const profile = profileRes.data;
-        const addr = profile.address || {};
         setProfileData({
           name: profile.name || user?.name || '',
           email: profile.email || user?.email || '',
           phone: profile.phone || user?.phone || '',
           alternatePhone: profile.alternateNumber || profile.alternatePhone || '',
-          address: profile.homeAddress || addr.homeAddress || '',
+          address: profile.homeAddress || '',
+          pincode: profile.pincode || '',
+          nearLandmark: profile.nearLandmark || '',
         });
       }
+
+      const bookingsRes = await apiService.getUserServiceBookings().catch(() => ({ success: false, data: [] }));
+      if (bookingsRes.success) setServiceBookings(bookingsRes.data || []);
 
       const rentalsRes = await apiService.getUserOrders(uid, { limit: 50 });
       if (rentalsRes.success) {
@@ -152,21 +162,32 @@ const UserDashboard = () => {
   };
 
   const handleProfileUpdate = async () => {
+    setProfileSaving(true);
+    setProfileMsg({ type: '', text: '' });
     try {
       const digits = (p) => String(p || '').replace(/\D/g, '').slice(-10);
-      const response = await apiService.updateUserProfile({
+      const payload = {
         name: profileData.name,
-        phone: profileData.phone ? digits(profileData.phone) : undefined,
         homeAddress: profileData.address,
-        alternateNumber: profileData.alternatePhone ? digits(profileData.alternatePhone) : undefined,
-      });
+      };
+      if (profileData.phone) payload.phone = digits(profileData.phone);
+      if (profileData.alternatePhone) payload.alternateNumber = digits(profileData.alternatePhone);
+      if (profileData.pincode) payload.pincode = profileData.pincode;
+      if (profileData.nearLandmark) payload.nearLandmark = profileData.nearLandmark;
+
+      const response = await apiService.updateUserProfile(payload);
       if (response.success) {
         setEditingProfile(false);
         setEditingAddress(false);
-        // Update user in context if needed
+        setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+        setTimeout(() => setProfileMsg({ type: '', text: '' }), 3000);
+      } else {
+        setProfileMsg({ type: 'error', text: response.message || 'Failed to update profile' });
       }
-    } catch (error) {
-      console.error('Error updating profile:', error);
+    } catch {
+      setProfileMsg({ type: 'error', text: 'An error occurred. Please try again.' });
+    } finally {
+      setProfileSaving(false);
     }
   };
 
@@ -234,7 +255,7 @@ const UserDashboard = () => {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
-          {['overview', 'profile', 'orders', 'wishlist', 'issues', 'reviews'].map((tab) => (
+          {['overview', 'profile', 'orders', 'bookings', 'wishlist', 'issues', 'reviews'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -378,7 +399,7 @@ const UserDashboard = () => {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <h2 className="text-xl font-semibold text-text-dark">Profile Information</h2>
               {!editingProfile && (
                 <button
@@ -390,6 +411,17 @@ const UserDashboard = () => {
                 </button>
               )}
             </div>
+
+            {profileMsg.text && (
+              <div className={`mb-4 px-4 py-3 rounded-lg flex items-center gap-2 text-sm ${
+                profileMsg.type === 'success'
+                  ? 'bg-green-50 border border-green-200 text-green-700'
+                  : 'bg-red-50 border border-red-200 text-red-700'
+              }`}>
+                {profileMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                {profileMsg.text}
+              </div>
+            )}
 
             <div className="space-y-6">
               <div>
@@ -458,22 +490,12 @@ const UserDashboard = () => {
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-text-dark">Address</label>
-                  {!editingAddress && editingProfile && (
-                    <button
-                      onClick={() => setEditingAddress(true)}
-                      className="text-sm text-primary-blue hover:text-primary-blue-light"
-                    >
-                      Edit Address
-                    </button>
-                  )}
-                </div>
+                <label className="block text-sm font-medium text-text-dark mb-2">Address</label>
                 {editingAddress || editingProfile ? (
                   <textarea
                     value={profileData.address}
                     onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                    rows="4"
+                    rows="3"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                     placeholder="Enter your complete address"
                   />
@@ -482,23 +504,57 @@ const UserDashboard = () => {
                 )}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-dark mb-2">Pincode</label>
+                  {editingProfile ? (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={profileData.pincode}
+                      onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value.replace(/\D/g, '') })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                      placeholder="6-digit pincode"
+                    />
+                  ) : (
+                    <p className="text-text-dark">{profileData.pincode || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-dark mb-2">Near Landmark</label>
+                  {editingProfile ? (
+                    <input
+                      type="text"
+                      value={profileData.nearLandmark}
+                      onChange={(e) => setProfileData({ ...profileData, nearLandmark: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                      placeholder="e.g. Near Central Park"
+                    />
+                  ) : (
+                    <p className="text-text-dark">{profileData.nearLandmark || 'Not provided'}</p>
+                  )}
+                </div>
+              </div>
+
               {editingProfile && (
-                <div className="flex space-x-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
                     onClick={handleProfileUpdate}
-                    className="flex items-center space-x-2 px-6 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue-light transition"
+                    disabled={profileSaving}
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary-blue text-white rounded-lg hover:bg-primary-blue-light transition disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
+                    {profileSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>{profileSaving ? 'Saving…' : 'Save Changes'}</span>
                   </button>
                   <button
                     onClick={() => {
                       setEditingProfile(false);
                       setEditingAddress(false);
-                      // Reset to original data
+                      setProfileMsg({ type: '', text: '' });
                       loadData();
                     }}
-                    className="flex items-center space-x-2 px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                   >
                     <X className="w-4 h-4" />
                     <span>Cancel</span>
@@ -514,48 +570,71 @@ const UserDashboard = () => {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-text-dark mb-4">Order History</h2>
             {rentals.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {rentals.map((rental) => {
                   const orderKey = rental.orderId || rental.id;
+                  const isCancelled = String(rental.status || '').toLowerCase() === 'cancelled';
+                  const isPaid = String(rental.paymentStatus || '').toLowerCase() === 'paid';
+                  const payBg = isPaid ? 'bg-emerald-100 text-emerald-700' : isCancelled ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700';
                   return (
-                  <div key={rental.id} className="border-b pb-4 last:border-0">
-                    <div className="flex justify-between items-start mb-2 gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-text-dark">
-                          {rental.productDetails?.name || `${rental.acDetails?.brand} ${rental.acDetails?.model}`}
-                        </p>
-                        <p className="text-sm text-text-light">{rental.vendorName}</p>
-                        <p className="text-sm text-text-light mt-1">
-                          {rental.orderId ? `Order ${rental.orderId}` : ''}
-                          {rental.startDate ? ` • Placed: ${rental.startDate}` : ''}
-                          {rental.duration ? ` • Duration: ${rental.duration}` : ''}
-                          {rental.finalTotal != null ? ` • ₹${rental.finalTotal}` : ''}
-                        </p>
+                    <div key={rental.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {rental.orderId && (
+                              <span className="text-xs font-mono text-slate-500">{rental.orderId}</span>
+                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold capitalize ${getStatusColor(rental.status)}`}>
+                              {rental.status}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold capitalize ${payBg}`}>
+                              {rental.paymentStatus || 'pending'}
+                            </span>
+                          </div>
+                          <p className="font-semibold text-text-dark text-sm leading-snug">
+                            {rental.productDetails?.name || [rental.acDetails?.brand, rental.acDetails?.model].filter(Boolean).join(' ') || 'Order'}
+                          </p>
+                          <div className="flex flex-wrap gap-3 mt-1 text-xs text-text-light">
+                            {rental.startDate && <span>Placed: {rental.startDate}</span>}
+                            {rental.duration && <span>Duration: {rental.duration}</span>}
+                          </div>
+                        </div>
+                        {rental.finalTotal != null && (
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-base font-bold text-primary-blue">
+                              ₹{Number(rental.finalTotal).toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
                         <Link
                           to={`/orders/${encodeURIComponent(orderKey)}`}
-                          className="text-sm text-primary-blue hover:text-primary-blue-light font-medium mt-2 inline-block"
+                          className="text-sm text-primary-blue hover:text-primary-blue-light font-semibold"
                         >
-                          View order details
+                          View Details →
                         </Link>
+                        {!isCancelled && String(rental.status || '').toLowerCase() !== 'completed' && (
+                          <Link
+                            to={`/orders/${encodeURIComponent(orderKey)}`}
+                            className="text-sm text-red-500 hover:text-red-700 font-medium"
+                          >
+                            Cancel
+                          </Link>
+                        )}
                       </div>
-                      <span className={`flex-shrink-0 px-2 py-1 rounded text-xs font-semibold ${getStatusColor(rental.status)}`}>
-                        {rental.status}
-                      </span>
                     </div>
-                    {String(rental.status || '').toLowerCase() === 'completed' && (
-                      <Link
-                        to={`/review/${rental.id}`}
-                        className="text-sm text-primary-blue hover:text-primary-blue-light"
-                      >
-                        Write a Review
-                      </Link>
-                    )}
-                  </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-text-light">No orders yet. <Link to={defaultBrowsePath()} className="text-primary-blue">Browse Products</Link></p>
+              <div className="text-center py-10">
+                <ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-text-light mb-3">No orders yet.</p>
+                <Link to={defaultBrowsePath()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-blue text-white rounded-xl text-sm font-semibold hover:opacity-90">
+                  Browse Appliances
+                </Link>
+              </div>
             )}
           </div>
         )}
@@ -628,6 +707,45 @@ const UserDashboard = () => {
               </div>
             ) : (
               <p className="text-text-light">No issues raised yet.</p>
+            )}
+          </div>
+        )}
+
+        {/* Service Bookings Tab */}
+        {activeTab === 'bookings' && (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-text-dark mb-4">My Service Bookings</h2>
+            {serviceBookings.length > 0 ? (
+              <div className="space-y-4">
+                {serviceBookings.map((booking) => {
+                  const bid = booking._id || booking.id;
+                  const service = booking.serviceId;
+                  const serviceTitle = typeof service === 'object' ? service?.title || service?.name : 'Service';
+                  return (
+                    <div key={bid} className="border rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <CalendarCheck className="w-4 h-4 text-primary-blue flex-shrink-0" />
+                            <p className="font-semibold text-text-dark">{serviceTitle}</p>
+                          </div>
+                          <div className="text-sm text-text-light space-y-1">
+                            {booking.date && <p>Date: {new Date(booking.date).toLocaleDateString('en-IN')}</p>}
+                            {booking.time && <p>Time slot: {booking.time}</p>}
+                            {booking.address && <p>Address: {booking.address}</p>}
+                            {booking.contactName && <p>Contact: {booking.contactName}</p>}
+                          </div>
+                        </div>
+                        <span className={`flex-shrink-0 px-2 py-1 rounded text-xs font-semibold ${getStatusColor(booking.status)}`}>
+                          {booking.status || 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-text-light">No service bookings yet.</p>
             )}
           </div>
         )}

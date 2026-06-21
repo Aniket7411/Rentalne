@@ -88,6 +88,29 @@ export const AuthProvider = ({ children }) => {
 
   const sendLoginOtp = async (phone) => apiService.sendOtp(phone);
 
+  const sendSignupOtp = async (phone, name) => apiService.sendSignupOtp(phone, name);
+
+  const signupWithOtp = async (phone, otp, sessionId, userData = {}) => {
+    try {
+      const response = await apiService.verifySignupOtp(phone, otp, sessionId, userData);
+      if (response.success) {
+        const u = hydrateAuthUser(response.user);
+        setUser(u);
+        localStorage.setItem('user', JSON.stringify(u));
+        localStorage.setItem('token', response.token);
+        return { success: true, user: u };
+      }
+      return {
+        success: false,
+        message: response.message || 'OTP verification failed',
+        attemptsRemaining: response.attemptsRemaining,
+        error: response.error,
+      };
+    } catch (error) {
+      return { success: false, message: 'An error occurred during OTP verification' };
+    }
+  };
+
   const signup = async (userData) => {
     try {
       const response = await apiService.userSignup(userData);
@@ -136,6 +159,8 @@ export const AuthProvider = ({ children }) => {
     login,
     loginWithOtp,
     sendLoginOtp,
+    sendSignupOtp,
+    signupWithOtp,
     signup,
     forgotPassword,
     resetPassword,

@@ -86,7 +86,7 @@ const ServiceCard = ({ service, onAddClick, onView }) => {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-slate-200/90 hover:border-sky-400/50 hover:-translate-y-1 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:ring-offset-2 h-full flex flex-col"
+      className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-slate-200/90 hover:border-sky-400/50 hover:-translate-y-1 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:ring-offset-2 w-full flex flex-col"
     >
       <div className="w-full h-40 sm:h-44 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden shrink-0">
         {service.image ? (
@@ -107,44 +107,42 @@ const ServiceCard = ({ service, onAddClick, onView }) => {
         )}
       </div>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1 min-h-0">
+      <div className="p-4 flex flex-col">
         {service.badge && (
-          <div className="inline-flex items-center gap-1.5 bg-sky-50 text-sky-800 px-3 py-1.5 rounded-full text-xs font-semibold mb-3 w-fit border border-sky-100">
+          <div className="inline-flex items-center gap-1.5 bg-sky-50 text-sky-800 px-2.5 py-1 rounded-full text-xs font-semibold mb-2 w-fit border border-sky-100">
             {badgeIcons[service.badge] || customBadgeIcon || <User className="w-3.5 h-3.5 shrink-0" aria-hidden />}
             <span className="line-clamp-1">{service.badge}</span>
           </div>
         )}
 
-        <h3 className="text-base sm:text-lg font-bold text-neutral-900 mb-2 line-clamp-2 group-hover:text-sky-700 transition-colors">
+        <h3 className="text-base font-bold text-neutral-900 mb-1 line-clamp-2 group-hover:text-sky-700 transition-colors">
           {service.title}
         </h3>
 
-        <p className="text-slate-600 text-sm line-clamp-2 mb-3">{service.description}</p>
+        <p className="text-slate-500 text-xs line-clamp-2 mb-2">{service.description}</p>
 
         {(features.length > 0 || benefits.length > 0) && (
-          <div className="mb-4 pt-3 border-t border-slate-100 flex-1 min-h-0">
-            <ul className="space-y-1.5 text-xs sm:text-sm text-slate-600">
-              {(features.length ? features : benefits).slice(0, 3).map((f, i) => (
-                <li key={`f-${i}`} className="flex gap-2">
-                  <span className="text-sky-500 mt-1.5 h-1 w-1 shrink-0 rounded-full bg-sky-500" aria-hidden />
-                  <span className="leading-snug line-clamp-2">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="space-y-1 text-xs text-slate-600 mb-2 pt-2 border-t border-slate-100">
+            {(features.length ? features : benefits).slice(0, 3).map((f, i) => (
+              <li key={`f-${i}`} className="flex gap-2">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-sky-400" aria-hidden />
+                <span className="leading-snug line-clamp-1">{f}</span>
+              </li>
+            ))}
+          </ul>
         )}
 
-        <div className="mt-auto pt-3 border-t border-slate-100">
-          <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-2xl sm:text-[1.65rem] font-bold text-sky-600">₹{service.price}</span>
+        <div className="pt-2 border-t border-slate-100">
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-xl font-bold text-sky-600">₹{service.price}</span>
             {service.originalPrice && (
-              <span className="text-sm text-slate-400 line-through">₹{service.originalPrice}</span>
+              <span className="text-xs text-slate-400 line-through">₹{service.originalPrice}</span>
             )}
           </div>
           <button
             type="button"
             onClick={handleBookClick}
-            className="w-full inline-flex items-center justify-center bg-sky-500 hover:bg-sky-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 shadow-sm hover:shadow-md"
+            className="w-full inline-flex items-center justify-center bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md"
           >
             Book Service
           </button>

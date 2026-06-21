@@ -20,18 +20,14 @@ const Header = () => {
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-lg fixed top-0 z-50 w-full border-b border-gray-100">
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 md:h-20">
+        <div className="relative flex justify-between items-center h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 flex-shrink-0 group">
             <img
-              src="/ashlogo.png"
+              src="/newlogo.jpeg"
               alt="ASH Enterprise logo"
-              className="h-16 w-20 md:h-14 rounded-md md:w-24 object-contain  flex-shrink-0"
-              style={{ maxWidth: '100%', height: 'auto' }}
-              onError={(e) => {
-                console.error('Logo image not found at /ashlogo.png');
-                e.target.style.display = 'none';
-              }}
+              className="h-14 md:h-16 w-auto object-contain flex-shrink-0"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
             {/* <div className="text-xl md:text-2xl lg:text-3xl font-bold text-neutral-900 group-hover:text-sky-500 transition-colors whitespace-nowrap">
               ASH Enterprise
@@ -41,21 +37,24 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-1">
             {!user ? (
               <>
-                <Link to="/" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Home</Link>
                 <Link to={defaultBrowsePath()} className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Rent Now</Link>
                 <Link to="/about" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">About</Link>
                 <Link to="/contact" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Contact</Link>
-                <Link to="/faq" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">FAQ</Link>
                 <Link to="/service-request" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Book Services</Link>
                 <Link
                   to="/cart"
-                  className="relative p-2 rounded-lg text-neutral-900 hover:text-sky-500 hover:bg-slate-50"
+                  className="relative flex items-center gap-1 px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium"
                   aria-label="Cart"
                 >
-                  <ShoppingCart className="w-5 h-5" />
+                  <ShoppingCart className="w-4 h-4" />
+                  Cart
+                  {itemCount > 0 && (
+                    <span className="ml-0.5 min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center text-[10px] font-bold bg-sky-500 text-white rounded-full">
+                      {itemCount > 9 ? '9+' : itemCount}
+                    </span>
+                  )}
                 </Link>
-                <Link to="/login" className="px-4 py-2 text-neutral-900 hover:text-sky-500 transition-all rounded-lg hover:bg-slate-50 font-medium">Login</Link>
-                <Link to="/admin/login" className="ml-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-700 transition-all font-semibold shadow-md hover:shadow-lg">Admin</Link>
+                <Link to="/login" className="ml-1 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all font-semibold shadow-sm">Login</Link>
               </>
             ) : isAdmin ? (
               <>
@@ -116,8 +115,23 @@ const Header = () => {
             ) : null}
           </nav>
 
-          {/* Mobile Menu Button - Always on the right */}
+          {/* Cart icon — centered on mobile */}
+          <div className="md:hidden absolute left-1/2 -translate-x-1/2">
+            <Link
+              to="/cart"
+              className="relative flex items-center justify-center w-10 h-10 rounded-xl text-neutral-900 hover:text-sky-500 transition-colors"
+              aria-label={`Cart${itemCount ? `, ${itemCount} items` : ''}`}
+            >
+              <ShoppingCart className="w-6 h-6" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-0.5 flex items-center justify-center text-[10px] font-bold bg-sky-500 text-white rounded-full">
+                  {itemCount > 9 ? '9+' : itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
 
+          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -139,18 +153,15 @@ const Header = () => {
             <nav className="flex flex-col space-y-1">
               {!user ? (
                 <>
-                  <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Home</Link>
                   <Link to={defaultBrowsePath()} onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Rent Now</Link>
                   <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">About</Link>
                   <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Contact</Link>
-                  <Link to="/faq" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">FAQ</Link>
-                  <Link to="/service-request" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Service Request</Link>
+                  <Link to="/service-request" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Book Services</Link>
                   <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all flex items-center gap-2">
                     <ShoppingCart className="w-4 h-4" />
                     Cart{itemCount > 0 ? ` (${itemCount})` : ''}
                   </Link>
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-slate-50 text-neutral-900 font-medium transition-all">Login</Link>
-                  <Link to="/admin/login" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg bg-sky-500 text-white font-semibold text-center hover:bg-sky-700 transition-all">Admin</Link>
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg bg-sky-500 text-white font-semibold text-center hover:bg-sky-600 transition-all">Login</Link>
                 </>
               ) : isAdmin ? (
                 <>

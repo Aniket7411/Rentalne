@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../../services/api';
-import { Phone, MapPin, Calendar, AlertCircle, ShoppingBag, Wrench, Store, Loader2, CheckCircle, Mail } from 'lucide-react';
+import { Phone, MapPin, Calendar, AlertCircle, ShoppingBag, Wrench, Store, Loader2, CheckCircle, Mail, PhoneCall, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/Toast';
 
 const Leads = () => {
-  const [activeTab, setActiveTab] = useState('service'); // 'service', 'rental', 'vendor'
+  const [activeTab, setActiveTab] = useState('service'); // 'service', 'rental', 'vendor', 'callback'
   const [serviceLeads, setServiceLeads] = useState([]);
   const [rentalInquiries, setRentalInquiries] = useState([]);
   const [vendorRequests, setVendorRequests] = useState([]);
+  const [callbackLeads, setCallbackLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
@@ -27,32 +28,54 @@ const Leads = () => {
     setLoading(true);
     setError('');
     try {
-      const [serviceRes, rentalRes, vendorRes] = await Promise.all([
+      const [serviceRes, rentalRes, vendorRes, callbackRes] = await Promise.all([
         apiService.getServiceLeads(),
         apiService.getRentalInquiries(),
-        apiService.getVendorRequests().catch(() => ({ success: false, data: [] })), // Optional endpoint
+        apiService.getVendorRequests().catch(() => ({ success: false, data: [] })),
+        apiService.getAdminLeads().catch(() => ({ success: false, data: [] })),
       ]);
 
-      if (serviceRes.success) {
-        setServiceLeads(serviceRes.data || []);
-      } else {
-        showError(serviceRes.message || 'Failed to load service leads');
-      }
+      if (serviceRes.success) setServiceLeads(serviceRes.data || []);
+      else showError(serviceRes.message || 'Failed to load service leads');
 
-      if (rentalRes.success) {
-        setRentalInquiries(rentalRes.data || []);
-      } else {
-        showError(rentalRes.message || 'Failed to load rental inquiries');
-      }
+      if (rentalRes.success) setRentalInquiries(rentalRes.data || []);
+      else showError(rentalRes.message || 'Failed to load rental inquiries');
 
-      if (vendorRes.success) {
-        setVendorRequests(vendorRes.data || []);
-      }
-      // Vendor requests endpoint is optional, so we don't show error if it fails
+      if (vendorRes.success) setVendorRequests(vendorRes.data || []);
+
+      if (callbackRes.success) setCallbackLeads(callbackRes.data || []);
     } catch (err) {
       showError('An error occurred while loading data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCallbackLeadStatusUpdate = async (leadId, newStatus) => {
+    setUpdatingStatus(leadId);
+    try {
+      const response = await apiService.patchAdminLead(leadId, { status: newStatus });
+      if (response.success) {
+        success('Status updated successfully');
+        loadAllData();
+      } else {
+        showError(response.message || 'Failed to update status');
+      }
+    } catch {
+      showError('An error occurred while updating status');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDeleteCallbackLead = async (leadId) => {
+    if (!window.confirm('Delete this lead?')) return;
+    const response = await apiService.deleteAdminLead(leadId);
+    if (response.success) {
+      success('Lead deleted');
+      loadAllData();
+    } else {
+      showError(response.message || 'Delete failed');
     }
   };
 
@@ -209,6 +232,17 @@ const Leads = () => {
         Status: inq.status || '',
         CreatedAt: formatDate(inq.createdAt),
       }));
+    } else if (activeTab === 'callback') {
+      sheetName = 'Callback_Leads';
+      data = callbackLeads.map((lead, idx) => ({
+        SNo: idx + 1,
+        Name: lead.name || '',
+        Phone: lead.phone || '',
+        Email: lead.email || '',
+        Message: lead.message || '',
+        Status: lead.status || '',
+        CreatedAt: formatDate(lead.createdAt),
+      }));
     } else if (activeTab === 'vendor') {
       const vendors = vendorRequests;
       sheetName = 'Vendor_Requests';
@@ -295,6 +329,16 @@ const Leads = () => {
             >
               <Store className="w-4 h-4" />
               <span>Vendor Requests ({vendorRequests.length})</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('callback'); setFilter('all'); }}
+              className={`w-auto px-4 py-2 rounded-lg transition flex items-center space-x-2 ${activeTab === 'callback'
+                ? 'bg-primary-blue text-white'
+                : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+                }`}
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>Callback Leads ({callbackLeads.length})</span>
             </button>
           </div>
         </div>
@@ -707,6 +751,87 @@ const Leads = () => {
                             <Phone className="w-4 h-4" />
                             <span>Call Vendor</span>
                           </a>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+        {/* Callback Leads List */}
+        {activeTab === 'callback' && (
+          <>
+            {callbackLeads.length === 0 ? (
+              <div className="bg-white p-12 rounded-lg shadow-md text-center">
+                <PhoneCall className="w-16 h-16 text-text-light mx-auto mb-4" />
+                <p className="text-text-light text-lg">No callback leads yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {callbackLeads.map((lead) => {
+                  const leadId = lead._id || lead.id;
+                  return (
+                    <motion.div
+                      key={leadId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-lg shadow-md p-6"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h3 className="text-xl font-semibold text-text-dark">{lead.name || 'Unknown'}</h3>
+                              {lead.email && <p className="text-sm text-text-light">{lead.email}</p>}
+                              <p className="text-xs text-text-light mt-1">Received: {formatDate(lead.createdAt)}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              lead.status === 'new' || lead.status === 'New'
+                                ? 'bg-blue-100 text-blue-800'
+                                : lead.status === 'contacted' || lead.status === 'Contacted'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : lead.status === 'converted' || lead.status === 'Converted'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {lead.status || 'new'}
+                            </span>
+                          </div>
+                          {lead.message && <p className="text-text-dark mb-3">{lead.message}</p>}
+                          <div className="flex items-center space-x-2 text-text-light">
+                            <Phone className="w-4 h-4" />
+                            <a href={`tel:${lead.phone}`} className="text-sm hover:text-primary-blue">{lead.phone}</a>
+                          </div>
+                        </div>
+                        <div className="flex flex-col space-y-2 md:w-44">
+                          <label className="text-sm font-medium text-text-dark">Update Status</label>
+                          <select
+                            value={lead.status || 'new'}
+                            onChange={(e) => handleCallbackLeadStatusUpdate(leadId, e.target.value)}
+                            disabled={updatingStatus === leadId}
+                            className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 text-sm"
+                          >
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="converted">Converted</option>
+                            <option value="lost">Lost</option>
+                          </select>
+                          <a
+                            href={`tel:${lead.phone}`}
+                            className="flex items-center justify-center space-x-2 px-3 py-1.5 bg-primary-blue text-white rounded-lg hover:bg-primary-blue-light transition text-sm"
+                          >
+                            <Phone className="w-4 h-4" />
+                            <span>Call Now</span>
+                          </a>
+                          <button
+                            onClick={() => handleDeleteCallbackLead(leadId)}
+                            className="flex items-center justify-center space-x-2 px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition text-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
                         </div>
                       </div>
                     </motion.div>

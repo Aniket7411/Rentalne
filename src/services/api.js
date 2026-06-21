@@ -29,9 +29,12 @@ const buildRentalInquiryPayload = (data) => ({
   duration: normalizeInquiryDuration(data),
 });
 
-// Production API host (`/api` prefix). Public catalog: prefer GET /products (legacy: /acs).
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL?.replace(/\s+/g, '') || 'https://api.ashenterprises.in/api';
+  window.APP_CONFIG?.API_URL ||
+  process.env.REACT_APP_API_URL?.replace(/\s+/g, '') ||
+  'http://localhost:5000/api';
+
+console.log('%c[API] Base URL → ' + API_BASE_URL, 'color:#2563eb;font-weight:bold');
 
 // Create axios instance with default config
 const api = axios.create({
@@ -492,6 +495,51 @@ export const apiService = {
   verifyOtp: async (phone, otp, sessionId) => {
     try {
       const { data } = await api.post('/auth/verify-otp', { phone, otp, sessionId });
+      if (data.success === false) {
+        return {
+          success: false,
+          message: data.message || 'OTP verification failed',
+          error: data.error,
+          attemptsRemaining: data.attemptsRemaining,
+        };
+      }
+      return {
+        success: true,
+        token: data.token,
+        user: normalizeAuthUser(data.user),
+        message: data.message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'OTP verification failed',
+        attemptsRemaining: error.response?.data?.attemptsRemaining,
+        error: error.response?.data?.error,
+      };
+    }
+  },
+
+  sendSignupOtp: async (phone, name) => {
+    try {
+      const payload = { phone };
+      if (name) payload.name = name;
+      const { data } = await api.post('/auth/send-signup-otp', payload);
+      if (data.success === false) {
+        return { success: false, message: data.message || 'Failed to send OTP', error: data.error };
+      }
+      return { success: true, message: data.message, sessionId: data.sessionId, otp: data.otp };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send OTP',
+        error: error.response?.data?.error,
+      };
+    }
+  },
+
+  verifySignupOtp: async (phone, otp, sessionId, userData = {}) => {
+    try {
+      const { data } = await api.post('/auth/verify-signup-otp', { phone, otp, sessionId, ...userData });
       if (data.success === false) {
         return {
           success: false,
@@ -1051,6 +1099,18 @@ export const apiService = {
         success: false,
         message: error.response?.data?.message || 'Failed to delete product',
       };
+    }
+  },
+
+  createProduct: async (productData) => {
+    try {
+      const { data: body } = await postAdminCatalog(productData);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message || 'Failed to create product', error: body.error };
+      }
+      return { success: true, data: body.data, message: body.message || 'Product created successfully' };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Failed to create product' };
     }
   },
 
@@ -1942,11 +2002,12 @@ export const apiService = {
     }
   },
 
-  patchAdminOrderPaymentStatus: async (orderId, paymentStatus) => {
+  patchAdminOrderPaymentStatus: async (orderId, payload) => {
+    // payload: { paymentStatus, paymentMethod?, paymentReference?, notes? }
     try {
       const { data: body } = await api.patch(
         `/admin/orders/${encodeURIComponent(orderId)}/payment-status`,
-        { paymentStatus }
+        typeof payload === 'string' ? { paymentStatus: payload } : payload
       );
       if (apiEnvelopeFailed(body)) {
         return { success: false, message: body.message, error: body.error };
@@ -2157,6 +2218,214 @@ export const apiService = {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to submit review',
+      };
+    }
+  },
+
+  // ── Admin: Users ──────────────────────────────────────────────────────────
+
+  getAdminUsers: async (params = {}) => {
+    try {
+      const { data: body } = await api.get('/admin/users', { params });
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      const list = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === 'object' && Array.isArray(raw.users)
+          ? raw.users
+          : [];
+      return { success: true, data: list, pagination: body.pagination || raw?.pagination };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load users',
+      };
+    }
+  },
+
+  getAdminUserById: async (userId) => {
+    try {
+      const { data: body } = await api.get(`/admin/users/${encodeURIComponent(userId)}`);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: null, message: body.message };
+      }
+      return { success: true, data: body.data !== undefined ? body.data : body };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        message: error.response?.data?.message || 'User not found',
+      };
+    }
+  },
+
+  getAdminUserOrders: async (userId, params = {}) => {
+    try {
+      const { data: body } = await api.get(
+        `/admin/users/${encodeURIComponent(userId)}/orders`,
+        { params }
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      const list = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === 'object' && Array.isArray(raw.orders)
+          ? raw.orders
+          : [];
+      return { success: true, data: list };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load orders',
+      };
+    }
+  },
+
+  getAdminUserStats: async (userId) => {
+    try {
+      const { data: body } = await api.get(
+        `/admin/users/${encodeURIComponent(userId)}/stats`
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: null, message: body.message };
+      }
+      return { success: true, data: body.data !== undefined ? body.data : body };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        message: error.response?.data?.message || 'Failed to load stats',
+      };
+    }
+  },
+
+  // ── Admin: Callback Leads (POST /api/leads public form) ──────────────────
+
+  getAdminLeads: async (params = {}) => {
+    try {
+      const { data: body } = await api.get('/admin/leads', { params });
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      const list = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === 'object' && Array.isArray(raw.leads)
+          ? raw.leads
+          : [];
+      return { success: true, data: list, pagination: body.pagination };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load leads',
+      };
+    }
+  },
+
+  getAdminLeadStats: async () => {
+    try {
+      const { data: body } = await api.get('/admin/leads/stats');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: null, message: body.message };
+      }
+      return { success: true, data: body.data !== undefined ? body.data : body };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        message: error.response?.data?.message || 'Failed to load stats',
+      };
+    }
+  },
+
+  getAdminLeadById: async (id) => {
+    try {
+      const { data: body } = await api.get(`/admin/leads/${encodeURIComponent(id)}`);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: null, message: body.message };
+      }
+      return { success: true, data: body.data !== undefined ? body.data : body };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        message: error.response?.data?.message || 'Lead not found',
+      };
+    }
+  },
+
+  patchAdminLead: async (id, patch) => {
+    try {
+      const { data: body } = await api.patch(`/admin/leads/${encodeURIComponent(id)}`, patch);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Update failed',
+      };
+    }
+  },
+
+  deleteAdminLead: async (id) => {
+    try {
+      const { data: body } = await api.delete(`/admin/leads/${encodeURIComponent(id)}`);
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message };
+      }
+      return { success: true, message: body.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Delete failed',
+      };
+    }
+  },
+
+  // ── User: Service Bookings ────────────────────────────────────────────────
+
+  getUserServiceBookings: async () => {
+    try {
+      const { data: body } = await api.get('/service-bookings/my-bookings');
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, data: [], message: body.message };
+      }
+      const raw = body.data !== undefined ? body.data : body;
+      return { success: true, data: Array.isArray(raw) ? raw : [] };
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to load bookings',
+      };
+    }
+  },
+
+  // ── Admin: Ticket Remarks ─────────────────────────────────────────────────
+
+  addAdminTicketRemark: async (ticketId, remark) => {
+    try {
+      const { data: body } = await api.post(
+        `/admin/tickets/${encodeURIComponent(ticketId)}/remarks`,
+        { remark }
+      );
+      if (apiEnvelopeFailed(body)) {
+        return { success: false, message: body.message };
+      }
+      return { success: true, message: body.message, data: body.data || body };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to add remark',
       };
     }
   },

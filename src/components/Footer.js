@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { defaultBrowsePath } from '../utils/browseUrls';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Facebook } from 'lucide-react';
 
 const legal = [
   { label: 'Terms & Conditions', to: '/legal/terms-and-conditions' },
@@ -22,12 +22,10 @@ const Footer = () => {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex flex-col gap-3 group">
               <img
-                src="/ashlogo.png"
+                src="/newlogo.jpeg"
                 alt="ASH Enterprises"
-                className="h-12 w-auto max-w-[180px] object-contain rounded-md drop-shadow-sm"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                className="h-14 w-auto max-w-[180px] object-contain drop-shadow-sm"
+                onError={(e) => { e.target.style.display = 'none'; }}
               />
               <span className="text-lg font-bold text-white tracking-tight group-hover:text-sky-300 transition-colors">
                 ASH Enterprises
@@ -36,6 +34,26 @@ const Footer = () => {
             <p className="text-gray-300 text-sm leading-relaxed mt-3 max-w-sm">
               Your Comfort, Our Priority - Rent & Repair
             </p>
+            <div className="flex items-center gap-3 mt-4">
+              <a
+                href="https://www.instagram.com/ash_enterprises?igsh=MXI4ZXR4YXNod3N4bg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-pink-500 transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4 text-white" />
+              </a>
+              <a
+                href="https://www.facebook.com/share/192ftnQz5H/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-blue-600 transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-4 h-4 text-white" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}

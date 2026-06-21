@@ -15,6 +15,7 @@ import {
   HelpCircle,
   MessageSquare,
   Wrench,
+  UserCog,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -302,6 +303,17 @@ const AdminDashboard = () => {
                             <div>
                                 <p className="font-semibold">Service requests</p>
                                 <p className="text-sm text-text-light group-hover:text-white">Repair / post-order</p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            to="/admin/users"
+                            className="flex items-center space-x-3 p-4 border-2 border-dashed border-primary-blue rounded-lg hover:bg-primary-blue hover:text-white transition group"
+                        >
+                            <UserCog className="w-6 h-6 text-primary-blue group-hover:text-white" />
+                            <div>
+                                <p className="font-semibold">Manage Users</p>
+                                <p className="text-sm text-text-light group-hover:text-white">View users & their orders</p>
                             </div>
                         </Link>
                     </div>

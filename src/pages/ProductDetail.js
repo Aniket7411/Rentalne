@@ -19,6 +19,8 @@ import {
   Minus,
   Plus,
   Star,
+  ShoppingCart,
+  Search,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatPhoneNumber, getFormattedPhone, validatePhoneNumber } from '../utils/phoneFormatter';
@@ -119,13 +121,14 @@ const ProductDetail = () => {
   const [selectedMonths, setSelectedMonths] = useState(3);
   const [tenureIndex, setTenureIndex] = useState(0);
   const [saved, setSaved] = useState(false);
-  const [descOpen, setDescOpen] = useState(true);
+  const [descOpen, setDescOpen] = useState(false);
   const [benefitsOpen, setBenefitsOpen] = useState(false);
   const [specsOpen, setSpecsOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(() => RENTAL_FAQ.map((_, i) => i === 0));
   const [cartPaymentOption, setCartPaymentOption] = useState('payAdvance');
   const [cartBusy, setCartBusy] = useState(false);
   const [cartHint, setCartHint] = useState('');
+  const [cartModal, setCartModal] = useState(false);
 
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryData, setInquiryData] = useState({
@@ -334,15 +337,12 @@ const ProductDetail = () => {
     const res = await addRentalToCart(pid, cartPaymentOption, product);
     setCartBusy(false);
     if (res.success) {
-      setCartHint('Added to cart');
-      window.setTimeout(() => setCartHint(''), 2500);
+      setCartModal(true);
     } else {
       setCartHint(res.message || 'Could not add to cart');
       window.setTimeout(() => setCartHint(''), 4000);
     }
   };
-
-  const monthlyEnabled = Boolean(product?.monthlyPaymentEnabled);
 
   if (loading) {
     return (
@@ -372,84 +372,175 @@ const ProductDetail = () => {
   const available = product.status === 'Available';
 
   return (
-    <div className="min-h-screen bg-slate-100/80 py-5 sm:py-8 md:py-10">
+    <div className="min-h-screen bg-slate-100/80 pt-3 pb-6 sm:pt-4">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      {/* ── Add-to-cart success modal ── */}
+      {cartModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setCartModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
+          >
+            {/* Green top bar */}
+            <div className="bg-emerald-500 px-5 py-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-white text-sm leading-snug">Added to cart!</p>
+                <p className="text-emerald-100 text-xs truncate">{displayInfo.title}</p>
+              </div>
+              <button type="button" onClick={() => setCartModal(false)} className="text-white/70 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Product row */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
+              {product.images?.[0] ? (
+                <img src={product.images[0]} alt={displayInfo.title}
+                  className="w-14 h-14 rounded-xl object-cover border border-slate-200 flex-shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-slate-100 flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{displayInfo.title}</p>
+                {displayInfo.subtitle && <p className="text-xs text-slate-400 mt-0.5">{displayInfo.subtitle}</p>}
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {selectedMonths} month{selectedMonths !== 1 ? 's' : ''} · {
+                    cartPaymentOption === 'payNow' ? 'Pay Now' :
+                    cartPaymentOption === 'payAdvance' ? 'Pay Advance' : 'Pay Later'
+                  }
+                </p>
+              </div>
+              {selectedPrice > 0 && (
+                <p className="text-base font-bold text-sky-600 flex-shrink-0">₹{selectedPrice.toLocaleString('en-IN')}</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 py-4 space-y-2.5">
+              <button type="button"
+                onClick={() => { setCartModal(false); navigate('/cart'); }}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-semibold text-sm transition-colors">
+                <ShoppingCart className="w-4 h-4" /> Go to Cart
+              </button>
+              <button type="button"
+                onClick={() => { setCartModal(false); navigate(getBrowseRoute()); }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-sm transition-colors">
+                <Search className="w-4 h-4" /> Explore More
+              </button>
+              <button type="button"
+                onClick={() => setCartModal(false)}
+                className="w-full text-center text-xs text-slate-400 hover:text-slate-600 py-1 transition-colors">
+                Continue on this page
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
         <motion.button
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
           type="button"
           onClick={() => navigate(getBrowseRoute())}
-          className="mb-5 flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-primary-blue transition-colors"
+          className="mb-3 flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary-blue transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Browse
         </motion.button>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 lg:items-start mb-10 md:mb-14">
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.15fr] lg:gap-5 lg:items-start mb-5">
+          {/* LEFT: image + benefit cards only */}
+          <div className="space-y-3">
             <div className="rounded-2xl border border-slate-200/80 bg-slate-100 overflow-hidden shadow-sm">
               {hasImages ? (
-                <div className="relative aspect-square sm:aspect-[4/3] max-h-[min(100vw,28rem)] sm:max-h-[32rem] mx-auto bg-slate-200/50">
+                <div className="relative aspect-[4/3] max-h-[22rem] sm:max-h-[26rem] mx-auto bg-slate-200/50">
                   <img
                     src={product.images[currentImageIndex]}
                     alt={displayInfo.title}
-                    className="h-full w-full object-contain sm:object-cover"
+                    className="h-full w-full object-cover"
                     onError={(e) => {
                       e.target.src = 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=800&q=80';
                     }}
                   />
                   {product.images.length > 1 && (
                     <>
-                      <button
-                        type="button"
-                        onClick={prevImage}
-                        aria-label="Previous"
-                        className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
+                      <button type="button" onClick={prevImage} aria-label="Previous"
+                        className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md">
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={nextImage}
-                        aria-label="Next"
-                        className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md"
-                      >
-                        <ChevronRight className="h-5 w-5" />
+                      <button type="button" onClick={nextImage} aria-label="Next"
+                        className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md">
+                        <ChevronRight className="h-4 w-4" />
                       </button>
                     </>
                   )}
+                  {product.images.length > 1 && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                      {product.images.map((_, idx) => (
+                        <button key={idx} type="button" onClick={() => setCurrentImageIndex(idx)}
+                          className={`h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
+                      ))}
+                    </div>
+                  )}
                   {product.status ? (
-                    <div
-                      className={`absolute right-3 top-3 z-10 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm ${
-                        available ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
-                      }`}
-                    >
+                    <div className={`absolute right-3 top-3 z-10 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm ${available ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
                       {product.status}
                     </div>
                   ) : null}
                 </div>
               ) : (
-                <div className="flex aspect-square items-center justify-center text-slate-400 text-sm">No image</div>
+                <div className="flex aspect-[4/3] items-center justify-center text-slate-400 text-sm">No image</div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {BENEFIT_CARDS.map(({ icon: Icon, text }) => (
-                <div
-                  key={text}
-                  className="flex items-start gap-2 rounded-xl border border-sky-200/90 bg-sky-50/60 px-3 py-2.5 sm:px-3.5 sm:py-3"
-                >
-                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 sm:h-[18px] sm:w-[18px]" strokeWidth={2} />
-                  <span className="text-[11px] font-medium leading-snug text-slate-800 sm:text-xs">{text}</span>
+                <div key={text} className="flex items-start gap-2 rounded-xl border border-sky-200/90 bg-sky-50/60 px-3 py-2">
+                  <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" strokeWidth={2} />
+                  <span className="text-[11px] font-medium leading-snug text-slate-800">{text}</span>
                 </div>
               ))}
             </div>
+
+            {/* Q&A below benefit cards */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+              <h2 className="text-sm font-bold text-slate-900 mb-0.5">Questions &amp; Answers</h2>
+              <p className="text-xs text-slate-400 mb-3">Common questions from renters</p>
+              <div className="space-y-1.5">
+                {RENTAL_FAQ.map((item, i) => {
+                  const open = faqOpen[i];
+                  return (
+                    <div key={item.q} className={`rounded-xl border transition-colors ${open ? 'border-sky-200 bg-sky-50/40' : 'border-slate-100'}`}>
+                      <button type="button"
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
+                        onClick={() => setFaqOpen((prev) => { const next = [...prev]; next[i] = !next[i]; return next; })}>
+                        <span className="text-xs font-semibold text-slate-800">{item.q}</span>
+                        {open ? <Minus className="h-3.5 w-3.5 shrink-0 text-slate-400" /> : <Plus className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
+                      </button>
+                      {open && (
+                        <div className="border-t border-sky-100 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5 md:p-6">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <h1 className="text-xl font-semibold leading-snug text-slate-900 sm:text-2xl md:text-[1.65rem]">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-start justify-between gap-3 mb-1.5">
+              <h1 className="text-xl font-semibold leading-snug text-slate-900 sm:text-2xl">
                 {displayInfo.title}
               </h1>
               <button
@@ -458,20 +549,20 @@ const ProductDetail = () => {
                 className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-rose-500 transition-colors"
                 aria-label={saved ? 'Remove from saved' : 'Save'}
               >
-                <Heart className={`h-6 w-6 ${saved ? 'fill-rose-500 text-rose-500' : ''}`} strokeWidth={2} />
+                <Heart className={`h-5 w-5 ${saved ? 'fill-rose-500 text-rose-500' : ''}`} strokeWidth={2} />
               </button>
             </div>
 
-            {displayInfo.subtitle ? <p className="text-sm text-slate-500 mb-3">{displayInfo.subtitle}</p> : null}
+            {displayInfo.subtitle ? <p className="text-xs text-slate-500 mb-1.5">{displayInfo.subtitle}</p> : null}
 
             {product.location ? (
-              <div className="flex items-center gap-1.5 text-sm font-medium text-sky-600 mb-5">
-                <MapPin className="h-4 w-4 shrink-0" />
+              <div className="flex items-center gap-1 text-xs font-medium text-sky-600 mb-3">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
                 {product.location}
               </div>
             ) : null}
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2 mb-3">
               {product.description ? (
                 <CollapsiblePanel title="Description" open={descOpen} onToggle={() => setDescOpen((o) => !o)}>
                   <p className="text-sm leading-relaxed text-slate-600 whitespace-pre-line">{product.description}</p>
@@ -535,8 +626,8 @@ const ProductDetail = () => {
               ) : null}
             </div>
 
-            <div className="border-t border-slate-100 pt-5">
-              <div className="mb-3 flex items-center gap-2">
+            <div className="border-t border-slate-100 pt-3">
+              <div className="mb-2 flex items-center gap-1.5">
                 <span className="text-sm font-semibold text-slate-900">Choose tenure</span>
                 <Info className="h-3.5 w-3.5 text-sky-500" />
               </div>
@@ -547,9 +638,9 @@ const ProductDetail = () => {
                 step={1}
                 value={tenureIndex}
                 onChange={(e) => syncTenureFromIndex(Number(e.target.value))}
-                className="mb-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500"
+                className="mb-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500"
               />
-              <div className="mb-4 flex justify-between gap-0.5 text-[10px] font-semibold text-slate-500 sm:text-xs">
+              <div className="mb-3 flex justify-between gap-0.5 text-[10px] font-semibold text-slate-500 sm:text-xs">
                 {TENURE_MONTHS.map((m) => (
                   <span key={m} className={m === selectedMonths ? 'text-sky-600' : ''}>
                     {m}
@@ -557,7 +648,7 @@ const ProductDetail = () => {
                 ))}
               </div>
 
-              <div className="mb-5">
+              <div className="mb-3">
                 {selectedPrice > 0 ? (
                   <>
                     <span className="text-2xl font-bold text-sky-600 tabular-nums sm:text-3xl">
@@ -578,51 +669,48 @@ const ProductDetail = () => {
                     type="button"
                     disabled={cartBusy}
                     onClick={handleAddToCart}
-                    className="mb-3 w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-60 sm:text-base"
+                    className="mb-2 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-60"
                   >
                     {cartBusy ? 'Adding…' : 'Add to Cart'}
                   </button>
                   {discountPct > 0 && saveAmount > 0 ? (
-                    <p className="mb-4 flex items-center gap-1.5 text-xs font-medium text-emerald-600 sm:text-sm">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                       <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
                       {discountPct}% discount — Save ₹{saveAmount.toLocaleString('en-IN')}
                     </p>
                   ) : (
-                    <div className="mb-4" />
+                    <div className="mb-2" />
                   )}
 
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setCartPaymentOption('payAdvance')}
-                      className={`rounded-xl py-2.5 text-xs font-bold sm:text-sm ${
-                        cartPaymentOption === 'payAdvance'
-                          ? 'bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-400 ring-offset-1'
-                          : 'bg-emerald-500/90 text-white hover:bg-emerald-600'
-                      }`}
-                    >
-                      Pay Advance
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!monthlyEnabled}
-                      onClick={() => monthlyEnabled && setCartPaymentOption('payNow')}
-                      className={`rounded-xl py-2.5 text-xs font-bold sm:text-sm ${
-                        !monthlyEnabled
-                          ? 'cursor-not-allowed bg-slate-200 text-slate-500'
-                          : cartPaymentOption === 'payNow'
-                            ? 'bg-slate-200 text-slate-800 ring-2 ring-slate-400 ring-offset-1'
-                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                      }`}
-                    >
-                      Pay Monthly
-                    </button>
+                  <p className="text-xs font-semibold text-slate-700 mb-1.5">Payment option</p>
+                  <div className="space-y-1.5">
+                    {[
+                      { v: 'payNow', label: 'Pay Now (Full Amount)', sub: 'Pay full & get instant discount' },
+                      { v: 'payAdvance', label: 'Pay Advance', sub: 'Small advance to book, rest at delivery' },
+                      { v: 'payLater', label: 'Pay Later', sub: 'Pay after installation by our team' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.v}
+                        type="button"
+                        onClick={() => setCartPaymentOption(opt.v)}
+                        className={`w-full flex items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left transition-all ${
+                          cartPaymentOption === opt.v
+                            ? 'border-sky-400 bg-sky-50'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className={`h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                          cartPaymentOption === opt.v ? 'border-sky-500' : 'border-slate-300'
+                        }`}>
+                          {cartPaymentOption === opt.v && <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-semibold leading-tight ${cartPaymentOption === opt.v ? 'text-slate-900' : 'text-slate-700'}`}>{opt.label}</p>
+                          <p className="text-[10px] text-slate-400 leading-tight">{opt.sub}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  {product.monthlyPrice != null && monthlyEnabled ? (
-                    <p className="mt-2 text-xs text-slate-500">
-                      Monthly from ₹{Number(product.monthlyPrice).toLocaleString('en-IN')} (where applicable)
-                    </p>
-                  ) : null}
                 </>
               ) : null}
 
@@ -630,7 +718,7 @@ const ProductDetail = () => {
                 <p className="text-sm font-medium text-amber-700">Currently not available for rent.</p>
               ) : null}
 
-              {cartHint ? <p className="mt-3 text-xs text-slate-600 sm:text-sm">{cartHint}</p> : null}
+              {cartHint ? <p className="mt-2 text-xs font-medium text-red-600">{cartHint}</p> : null}
 
               <button
                 type="button"
@@ -643,63 +731,25 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 pb-8">
-          <section className="lg:col-span-7">
-            <h2 className="text-lg font-semibold text-slate-900 sm:text-xl mb-1">Questions &amp; Answers</h2>
-            <p className="text-sm text-slate-500 mb-4">Common questions from renters.</p>
-            <div className="space-y-2">
-              {RENTAL_FAQ.map((item, i) => {
-                const open = faqOpen[i];
-                return (
-                  <div
-                    key={item.q}
-                    className={`rounded-xl border bg-white ${open ? 'border-sky-300 shadow-sm' : 'border-slate-200'}`}
-                  >
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                      onClick={() =>
-                        setFaqOpen((prev) => {
-                          const next = [...prev];
-                          next[i] = !next[i];
-                          return next;
-                        })
-                      }
-                    >
-                      <span className="text-sm font-semibold text-slate-900">{item.q}</span>
-                      {open ? <Minus className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
-                    </button>
-                    {open ? (
-                      <div className="border-t border-sky-100 bg-sky-50/50 px-4 py-3 text-sm leading-relaxed text-sky-900">
-                        {item.a}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+        {/* Recommendations — horizontal scroll */}
+        {related.length > 0 && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2.5">
+              <h2 className="text-sm font-bold text-slate-900">You may also like</h2>
+              <Link to={getBrowseRoute()} className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:underline">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
-          </section>
-
-          <section className="lg:col-span-5">
-            <h2 className="text-lg font-semibold text-slate-900 sm:text-xl mb-1">Recommended Products</h2>
-            <p className="text-sm text-slate-500 mb-4">Products you might like</p>
-            {related.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                {related.map((p) => (
-                  <ProductCard key={p._id || p.id} product={p} listingDuration={String(selectedMonths)} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">No similar listings right now.</p>
-            )}
-            <Link
-              to={getBrowseRoute()}
-              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-sky-600 hover:underline"
-            >
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </section>
-        </div>
+            <div className="flex gap-3 overflow-x-auto pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {related.slice(0, 12).map((p) => (
+                <div key={p._id || p.id} className="flex-shrink-0" style={{ width: 'calc(50vw - 28px)', maxWidth: '260px', minWidth: '160px' }}>
+                  <ProductCard product={p} listingDuration={String(selectedMonths)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showInquiryForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
