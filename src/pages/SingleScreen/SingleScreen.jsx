@@ -26,7 +26,7 @@ function SingleScreen() {
   return (
     <div
       ref={bannerRef}
-      className="flex flex-row w-full"
+      className="flex flex-col sm:flex-row w-full"
       style={{ height: "90vh", minHeight: 320 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
