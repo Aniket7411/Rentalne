@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, Star, Snowflake, Wrench, Clock, Loader2, Shield, Zap, Users } from 'lucide-react';
@@ -27,6 +27,16 @@ const Home = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [brandsPaused, setBrandsPaused] = useState(false);
+  const appliancesGridRef = useRef(null);
+  const [cursorRatio, setCursorRatio] = useState(0.5);
+
+  const handleAppliancesMouseMove = useCallback((e) => {
+    const rect = appliancesGridRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setCursorRatio(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
+  }, []);
+
+  const handleAppliancesMouseLeave = useCallback(() => setCursorRatio(0.5), []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -162,7 +172,12 @@ const Home = () => {
             <p className="text-sm sm:text-base text-gray-500">Checkout our huge collection of appliances on rent</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <div
+            ref={appliancesGridRef}
+            onMouseMove={handleAppliancesMouseMove}
+            onMouseLeave={handleAppliancesMouseLeave}
+            className="flex flex-col md:flex-row gap-6 md:gap-8"
+          >
 
             {/* ── Air Conditioners ── */}
             <motion.div
@@ -171,16 +186,20 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
               className="flex flex-col gap-3"
+              style={{ flex: 1.5 - cursorRatio, minWidth: 0, transition: 'flex 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' }}
             >
               {/* Main hero card */}
               <Link to={browsePath(BROWSE_CATEGORY.AC)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
                 <div className="relative h-44 sm:h-52 md:h-56">
-                  <img src="/acnewimage.jpeg" alt="Air Conditioners" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <motion.img
+                    src="/acnewimage.jpeg" alt="Air Conditioners"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                  />
                   <div className="absolute bottom-0 left-0 p-4 text-white">
-                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Air Conditioners</h3>
-                    <p className="text-xs text-gray-200 mb-2">Stay cool &amp; comfortable</p>
-                    <ArrowRight className="w-5 h-5" />
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Air Conditioners</h3>
+                    <p className="text-xs text-gray-100 mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Stay cool &amp; comfortable</p>
+                    <ArrowRight className="w-5 h-5 drop-shadow-md" />
                   </div>
                 </div>
               </Link>
@@ -188,16 +207,22 @@ const Home = () => {
               <div className="grid grid-cols-2 gap-3">
                 <Link to={`${browsePath(BROWSE_CATEGORY.AC)}&type=Split`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/splitacnew.png" alt="Split AC" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Split AC</span>
+                    <motion.img
+                      src="/splitacnew.png" alt="Split AC"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Split AC</span>
                   </div>
                 </Link>
                 <Link to={`${browsePath(BROWSE_CATEGORY.AC)}&type=Window`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/windowacnew.png" alt="Window AC" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Window AC</span>
+                    <motion.img
+                      src="/windowacnew.png" alt="Window AC"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Window AC</span>
                   </div>
                 </Link>
               </div>
@@ -210,31 +235,41 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="flex flex-col gap-3"
+              style={{ flex: 1, minWidth: 0 }}
             >
               <Link to={browsePath(BROWSE_CATEGORY.REFRIGERATOR)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
                 <div className="relative h-44 sm:h-52 md:h-56">
-                  <img src="/refrigeratorneww.png" alt="Refrigerators" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <motion.img
+                    src="/refrigeratorneww.png" alt="Refrigerators"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                  />
                   <div className="absolute bottom-0 left-0 p-4 text-white">
-                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Refrigerators</h3>
-                    <p className="text-xs text-gray-200 mb-2">Fresh storage solutions</p>
-                    <ArrowRight className="w-5 h-5" />
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Refrigerators</h3>
+                    <p className="text-xs text-gray-100 mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Fresh storage solutions</p>
+                    <ArrowRight className="w-5 h-5 drop-shadow-md" />
                   </div>
                 </div>
               </Link>
               <div className="grid grid-cols-2 gap-3">
                 <Link to={`${browsePath(BROWSE_CATEGORY.REFRIGERATOR)}&type=Single+Door`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/singledoor.jfif" alt="Single Door" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Single Door</span>
+                    <motion.img
+                      src="/singledoor.jfif" alt="Single Door"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Single Door</span>
                   </div>
                 </Link>
                 <Link to={`${browsePath(BROWSE_CATEGORY.REFRIGERATOR)}&type=Double+Door`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/doublerefridgenew.png" alt="Double Door" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Double Door</span>
+                    <motion.img
+                      src="/doublerefridgenew.png" alt="Double Door"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Double Door</span>
                   </div>
                 </Link>
               </div>
@@ -247,31 +282,41 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex flex-col gap-3"
+              style={{ flex: 0.5 + cursorRatio, minWidth: 0, transition: 'flex 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' }}
             >
               <Link to={browsePath(BROWSE_CATEGORY.WASHING_MACHINE)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
                 <div className="relative h-44 sm:h-52 md:h-56">
-                  <img src="/washingmahineee.png" alt="Washing Machines" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                  <motion.img
+                    src="/washingmahineee.png" alt="Washing Machines"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                  />
                   <div className="absolute bottom-0 left-0 p-4 text-white">
-                    <h3 className="text-lg sm:text-xl font-bold mb-0.5">Washing Machines</h3>
-                    <p className="text-xs text-gray-200 mb-2">Clean clothes effortlessly</p>
-                    <ArrowRight className="w-5 h-5" />
+                    <h3 className="text-lg sm:text-xl font-bold mb-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Washing Machines</h3>
+                    <p className="text-xs text-gray-100 mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Clean clothes effortlessly</p>
+                    <ArrowRight className="w-5 h-5 drop-shadow-md" />
                   </div>
                 </div>
               </Link>
               <div className="grid grid-cols-2 gap-3">
                 <Link to={`${browsePath(BROWSE_CATEGORY.WASHING_MACHINE)}&type=Automatic`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/fullywashingnew.png" alt="Fully Automatic" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Fully Automatic</span>
+                    <motion.img
+                      src="/fullywashingnew.png" alt="Fully Automatic"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Fully Automatic</span>
                   </div>
                 </Link>
                 <Link to={`${browsePath(BROWSE_CATEGORY.WASHING_MACHINE)}&type=Semi+automatic`} className="group block relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300">
                   <div className="relative h-24 sm:h-28">
-                    <img src="/semiwahingnew.png" alt="Semi-Automatic" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold">Semi-Automatic</span>
+                    <motion.img
+                      src="/semiwahingnew.png" alt="Semi-Automatic"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      initial={{ scale: 1.08 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+                    />
+                    <span className="absolute bottom-2 left-3 text-white text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Semi-Automatic</span>
                   </div>
                 </Link>
               </div>
