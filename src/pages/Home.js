@@ -183,7 +183,7 @@ const Home = () => {
             >
               {/* Main hero card */}
               <Link to={browsePath(BROWSE_CATEGORY.AC)} className="group block relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
-                <div className="relative h-44 sm:h-52 md:h-56">
+                <div className="relative h-52 sm:h-56 md:h-64">
                   <motion.img
                     src="/acnewimage.jpeg" alt="Air Conditioners"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

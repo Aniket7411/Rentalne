@@ -42,7 +42,7 @@ function SingleScreen() {
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-center pl-6 pr-4 sm:pl-10 sm:pr-6 lg:pl-20 lg:pr-10 py-6 z-10">
+        <div className="absolute inset-0 flex flex-col justify-center pl-10 pr-4 sm:pl-12 sm:pr-6 lg:pl-20 lg:pr-10 py-6 z-10">
           <span className="inline-block text-sky-300 text-xs sm:text-sm font-semibold tracking-widest uppercase mb-2 drop-shadow">
             Appliance Rental
           </span>
@@ -75,7 +75,7 @@ function SingleScreen() {
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-center pl-6 pr-4 sm:pl-10 sm:pr-6 lg:pl-20 lg:pr-10 py-6 z-10">
+        <div className="absolute inset-0 flex flex-col justify-center pl-10 pr-4 sm:pl-12 sm:pr-6 lg:pl-20 lg:pr-10 py-6 z-10">
           <span className="inline-block text-sky-300 text-xs sm:text-sm font-semibold tracking-widest uppercase mb-2 drop-shadow">
             Need Help?
           </span>
