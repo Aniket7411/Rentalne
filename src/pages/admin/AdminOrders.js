@@ -384,7 +384,7 @@ const DetailDrawer = ({ order, onClose, onStatusChange, onMarkPaid, busyId }) =>
                       {(bd.preferredDate || bd.date) && (
                         <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
                           <Calendar className="w-3 h-3" />
-                          {bd.preferredDate || bd.date} {bd.preferredTime || bd.time && `at ${bd.preferredTime || bd.time}`}
+                          {bd.preferredDate || bd.date} {(bd.preferredTime || bd.time) && `at ${bd.preferredTime || bd.time}`}
                         </div>
                       )}
                       {bd.address && (
